@@ -1,176 +1,145 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>AlienGamer Chess — Real Analysis</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AlienGamer Chess — Legal & Analyzed</title>
 
-<!-- ✅ chess.js rules engine -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/1.0.0/chess.min.js"></script>
-
+<!-- ✅ Local libraries -->
+<script src="./js/chess.js"></script>  <!-- local chess.js -->
 <style>
-  body {
-    background:#111;color:#fff;font-family:Arial;
-    display:flex;flex-direction:column;align-items:center;justify-content:center;
-    min-height:100vh;margin:0;
-  }
-  #board {
-    display:grid;
-    grid-template-columns:repeat(8,80px);
-    grid-template-rows:repeat(8,80px);
-    border:4px solid #000;
-    position:relative;
-  }
-  .square {
-    width:80px;height:80px;
-    display:flex;justify-content:center;align-items:center;
-    position:relative;
-  }
-  .light { background:#f0d9b5; }
-  .dark  { background:#b58863; }
-  .piece { width:72px;height:72px;cursor:grab; }
-  #turn { font-size:1.3rem;margin-top:15px; }
-
-  .overlay {
-    position:absolute;top:0;left:0;width:100%;height:100%;
-    opacity:0.5;border-radius:2px;z-index:1;
-  }
-  .moveIcon {
-    position:absolute;top:2px;right:2px;width:28px;height:28px;
-    z-index:2;pointer-events:none;
-  }
+body{
+  background:#111;color:#fff;font-family:Arial;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  min-height:100vh;margin:0;
+}
+#board{
+  display:grid;
+  grid-template-columns:repeat(8,80px);
+  grid-template-rows:repeat(8,80px);
+  border:4px solid #000;
+}
+.square{width:80px;height:80px;display:flex;justify-content:center;align-items:center;position:relative;}
+.light{background:#f0d9b5;} .dark{background:#b58863;}
+.piece{width:72px;height:72px;cursor:grab;}
+.overlay{position:absolute;top:0;left:0;width:100%;height:100%;opacity:.5;border-radius:2px;z-index:1;}
+.moveIcon{position:absolute;top:2px;right:2px;width:28px;height:28px;z-index:2;pointer-events:none;}
+#turn{margin-top:10px;font-size:1.3rem;}
 </style>
 </head>
 <body>
-  <div id="board"></div>
-  <div id="turn">Loading engine…</div>
+<div id="board"></div>
+<div id="turn">Loading engine…</div>
 
 <script>
-let game = new Chess(); // chess.js game state
+let game = new Chess();
 const board = document.getElementById("board");
 const turnDisplay = document.getElementById("turn");
-let engine = null, ready = false, lastEval = 0;
+let engine, ready=false, lastEval=0;
 
-// color mapping
-const evalColors = {
-  brilliant:'#6ed6ff', // light blue
-  great:'#005eff',     // dark blue
-  best:'#90ee90',      // light green
-  excellent:'#3fa64a', // medium green
-  good:'#006400',      // dark green
-  book:'#a97452',      // brown
-  inaccuracy:'#ffe700',// yellow
-  mistake:'#ff9800',   // orange
-  miss:'#ff7272',      // light red
-  blunder:'#ff0000'    // red
+// classification colors
+const evalColors={
+  best:"#90ee90",excellent:"#4caf50",good:"#2e8b57",
+  inaccuracy:"#ffe700",mistake:"#ff9800",blunder:"#ff0000"
 };
-
 function classify(diff){
-  diff = Math.abs(diff);
-  if(diff <= 15) return "best";
-  if(diff <= 40) return "excellent";
-  if(diff <= 100) return "good";
-  if(diff <= 200) return "inaccuracy";
-  if(diff <= 400) return "mistake";
-  return "blunder";
+  diff=Math.abs(diff);
+  if(diff<=15)return"best";
+  if(diff<=40)return"excellent";
+  if(diff<=100)return"good";
+  if(diff<=200)return"inaccuracy";
+  if(diff<=400)return"mistake";
+  return"blunder";
 }
 
 function drawBoard(){
   board.innerHTML="";
-  const squares = [];
-  const ranks = [8,7,6,5,4,3,2,1];
-  const files = ['a','b','c','d','e','f','g','h'];
+  const ranks=[8,7,6,5,4,3,2,1],files=["a","b","c","d","e","f","g","h"];
   for(const r of ranks){
     for(const f of files){
-      const id=f+r;
-      const sq=document.createElement('div');
-      sq.id=id;
-      sq.className='square '+(((files.indexOf(f)+ranks.indexOf(r))%2===0)?'light':'dark');
-      const piece=game.get(id);
+      const sqId=f+r;
+      const div=document.createElement("div");
+      div.id=sqId;
+      div.className="square "+(((files.indexOf(f)+ranks.indexOf(r))%2===0?"light":"dark"));
+      const piece=game.get(sqId);
       if(piece){
-        const img=document.createElement('img');
+        const img=document.createElement("img");
         img.src=`pieces/${piece.color}${piece.type}.png`;
-        img.className='piece';
+        img.className="piece";
         img.draggable=true;
-        sq.appendChild(img);
+        div.appendChild(img);
       }
-      board.appendChild(sq);
+      board.appendChild(div);
     }
   }
-  turnDisplay.textContent = (game.turn()==='w')?"White to move":"Black to move";
+  turnDisplay.textContent=(game.turn()==="w")?"White to move":"Black to move";
   enableDragDrop();
 }
 
-function highlightSquare(sq, type){
+function highlightSquare(sq,type){
   const el=document.getElementById(sq);
-  if(!el) return;
+  if(!el)return;
   el.querySelectorAll(".overlay,.moveIcon").forEach(e=>e.remove());
-  const overlay=document.createElement("div");
-  overlay.className="overlay";
-  overlay.style.background=evalColors[type] || "#ffffff44";
+  const ov=document.createElement("div");
+  ov.className="overlay";
+  ov.style.background=evalColors[type]||"#8888";
   const icon=document.createElement("img");
   icon.className="moveIcon";
   icon.src=`move_classifications/${type}.png`;
-  el.appendChild(overlay);
-  el.appendChild(icon);
+  el.append(ov,icon);
 }
 
 function enableDragDrop(){
   let dragged=null,source=null;
-  document.querySelectorAll(".piece").forEach(pc=>{
-    pc.addEventListener("dragstart",e=>{
+  document.querySelectorAll(".piece").forEach(p=>{
+    p.addEventListener("dragstart",e=>{
       source=e.target.parentElement.id;
       dragged=e.target;
       setTimeout(()=>dragged.style.visibility="hidden",0);
     });
-    pc.addEventListener("dragend",()=>{dragged.style.visibility="visible";dragged=null;});
+    p.addEventListener("dragend",()=>{dragged.style.visibility="visible";dragged=null;});
   });
   document.querySelectorAll(".square").forEach(sq=>{
     sq.addEventListener("dragover",e=>e.preventDefault());
     sq.addEventListener("drop",e=>{
       e.preventDefault();
       const target=e.target.closest(".square").id;
-      if(!source) return;
-      const move = game.move({from:source,to:target,promotion:"q"});
-      if(move){
-        drawBoard();
-        analyzeMove(move);
-      }
+      if(!source)return;
+      const move=game.move({from:source,to:target,promotion:"q"});
+      if(move){drawBoard();analyzeMove(move);}
       source=null;
     });
   });
 }
 
-// send position to Stockfish
 function analyzeMove(move){
-  if(!ready || !engine) return;
-  const fen = game.fen();
-  engine.onmessage = (e)=>{
-    const line=e.data;
-    if(typeof line!=="string") return;
-    if(line.includes("cp")){
-      const match=line.match(/cp (-?\d+)/);
-      if(match){
-        const evalScore=parseInt(match[1]);
-        const diff=evalScore - lastEval;
-        lastEval=evalScore;
-        const type=classify(diff);
-        highlightSquare(move.to, type);
-      }
+  if(!ready||!engine)return;
+  const fen=game.fen();
+  engine.onmessage=e=>{
+    const msg=e.data;
+    if(typeof msg!=="string")return;
+    if(msg.includes("score cp")){
+      const m=msg.match(/cp (-?\d+)/);
+      if(!m)return;
+      const evalScore=parseInt(m[1]);
+      const diff=evalScore-lastEval;
+      lastEval=evalScore;
+      const type=classify(diff);
+      highlightSquare(move.to,type);
     }
   };
-  engine.postMessage("position fen " + fen);
+  engine.postMessage("position fen "+fen);
   engine.postMessage("go depth 12");
 }
 
 window.addEventListener("load",()=>{
-  try {
-    engine = new Worker("./js/stockfish.js");
-    ready = true;
-    console.log("✅ Stockfish running via Web Worker");
+  try{
+    engine=new Worker("./js/stockfish.js");
+    ready=true;
+    console.log("Stockfish ready");
     drawBoard();
-  } catch(err){
-    console.error("Stockfish failed:", err);
+  }catch(err){
+    console.error("Stockfish load failed",err);
     turnDisplay.textContent="⚠️ Engine failed to start";
   }
 });
