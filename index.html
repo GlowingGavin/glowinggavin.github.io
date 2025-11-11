@@ -1,217 +1,349 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AlienGamer Chess</title>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AlienGamer Chess — Pure JS</title>
 <style>
-  body {
-    background:#111;color:#fff;font-family:Arial;
-    display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;
-  }
+  body{background:#111;color:#fff;font-family:Arial,Helvetica,sans-serif;
+       display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;margin:0}
   #board{display:grid;grid-template-columns:repeat(8,80px);grid-template-rows:repeat(8,80px);
-    border:4px solid #000;margin-bottom:20px;}
-  .square{width:80px;height:80px;display:flex;justify-content:center;align-items:center;user-select:none;}
-  .light{background:#f0d9b5;} .dark{background:#b58863;}
-  .piece{width:72px;height:72px;cursor:grab;}
-  #turn{font-size:1.3rem;letter-spacing:1px;}
+         border:4px solid #000;box-shadow:0 0 16px #0ff;user-select:none}
+  .square{width:80px;height:80px;display:flex;justify-content:center;align-items:center}
+  .light{background:#f0d9b5}.dark{background:#b58863}
+  .piece{width:72px;height:72px;cursor:grab}
+  #hud{margin-top:14px;font-size:1.1rem}
+  #buttons{margin-top:8px;gap:8px;display:flex}
+  button{background:#222;color:#fff;border:1px solid #444;padding:6px 10px;border-radius:6px;cursor:pointer}
+  button:hover{background:#333}
 </style>
 </head>
 <body>
-<div id="board"></div>
-<div id="turn">White to move</div>
+  <div id="board"></div>
+  <div id="hud">White to move</div>
+  <div id="buttons">
+    <button id="resetBtn">Reset</button>
+  </div>
 
 <script>
-const files=['a','b','c','d','e','f','g','h'];
-const ranks=[8,7,6,5,4,3,2,1];
-const board=document.getElementById('board');
-const turnDisplay=document.getElementById('turn');
+const files = ['a','b','c','d','e','f','g','h'];
+const ranks = [8,7,6,5,4,3,2,1];
+const boardEl = document.getElementById('board');
+const hud = document.getElementById('hud');
 
-let startPos={
- a8:'br',b8:'bn',c8:'bb',d8:'bq',e8:'bk',f8:'bb',g8:'bn',h8:'br',
- a7:'bp',b7:'bp',c7:'bp',d7:'bp',e7:'bp',f7:'bp',g7:'bp',h7:'bp',
- a2:'wp',b2:'wp',c2:'wp',d2:'wp',e2:'wp',f2:'wp',g2:'wp',h2:'wp',
- a1:'wr',b1:'wn',c1:'wb',d1:'wq',e1:'wk',f1:'wb',g1:'wn',h1:'wr'
+const START = {
+  a8:'br',b8:'bn',c8:'bb',d8:'bq',e8:'bk',f8:'bb',g8:'bn',h8:'br',
+  a7:'bp',b7:'bp',c7:'bp',d7:'bp',e7:'bp',f7:'bp',g7:'bp',h7:'bp',
+  a2:'wp',b2:'wp',c2:'wp',d2:'wp',e2:'wp',f2:'wp',g2:'wp',h2:'wp',
+  a1:'wr',b1:'wn',c1:'wb',d1:'wq',e1:'wk',f1:'wb',g1:'wn',h1:'wr'
 };
-let gameState=structuredClone(startPos);
-let turn='w';
-let kingMoved={w:false,b:false};
-let rookMoved={a1:false,h1:false,a8:false,h8:false};
 
-function drawBoard(){
- board.innerHTML='';
- for(let r of ranks){
-  for(let f of files){
-   const sq=document.createElement('div');
-   sq.classList.add('square');
-   if((files.indexOf(f)+ranks.indexOf(r))%2===0)sq.classList.add('light');else sq.classList.add('dark');
-   const id=f+r;sq.id=id;
-   const piece=gameState[id];
-   if(piece){
-     const img=document.createElement('img');
-     img.src=`pieces/${piece}.png`;img.classList.add('piece');img.draggable=true;
-     sq.appendChild(img);
-   }
-   board.appendChild(sq);
+let S = structuredClone(START);
+let turn = 'w';
+let kingMoved = { w:false, b:false };
+let rookMoved = { a1:false, h1:false, a8:false, h8:false };
+
+function colorOf(p){ return p ? p[0] : null; }
+function typeOf(p){ return p ? p[1] : null; }
+function fileIndex(f){ return files.indexOf(f); }
+
+function draw(){
+  boardEl.innerHTML = '';
+  for(const r of ranks){
+    for(const f of files){
+      const id = f + r;
+      const sq = document.createElement('div');
+      sq.id = id;
+      sq.className = 'square ' + (((fileIndex(f)+ranks.indexOf(r))%2===0)?'light':'dark');
+      const p = S[id];
+      if(p){
+        const img = document.createElement('img');
+        img.className = 'piece';
+        img.draggable = true;
+        img.src = `pieces/${p}.png`;
+        sq.appendChild(img);
+      }
+      boardEl.appendChild(sq);
+    }
   }
- }
- turnDisplay.textContent=(turn==='w')?'White to move':'Black to move';
- enableDragAndDrop();
+  hud.textContent = (turn==='w'?'White':'Black') + ' to move';
+  enableDnD();
 }
 
-function colorOf(p){return p?p[0]:null;}
-function typeOf(p){return p?p[1]:null;}
-function index(f){return files.indexOf(f);}
 function clearPath(from,to){
- const fx=index(from[0]),fy=+from[1],tx=index(to[0]),ty=+to[1];
- const dx=Math.sign(tx-fx),dy=Math.sign(ty-fy);
- let x=fx+dx,y=fy+dy;
- while(x!==tx||y!==ty){
-   if(gameState[files[x]+y])return false;
-   x+=dx;y+=dy;
- }
- return true;
-}
-function squareAttacked(target,color){
- // check if any enemy piece could move to target
- for(const [sq,p] of Object.entries(gameState)){
-   if(colorOf(p)!==color && isLegalMove(sq,target,true))return true;
- }
- return false;
-}
-
-function findKing(color){
- for(const [sq,p] of Object.entries(gameState))
-   if(p===color+'k')return sq;
- return null;
-}
-
-function isKingInCheck(color){
- const kingSq=findKing(color);
- return squareAttacked(kingSq,color);
-}
-
-function wouldCauseCheck(from,to){
- const snapshot=structuredClone(gameState);
- gameState[to]=gameState[from];delete gameState[from];
- const check=isKingInCheck(colorOf(gameState[to]));
- gameState=structuredClone(snapshot);
- return check;
-}
-
-function isLegalMove(from,to,ignoreCheck=false){
- const piece=gameState[from];if(!piece)return false;
- const color=colorOf(piece),type=typeOf(piece);
- const fx=index(from[0]),fy=+from[1],tx=index(to[0]),ty=+to[1];
- const dx=tx-fx,dy=ty-fy,target=gameState[to];
- if(target&&colorOf(target)===color)return false;
- switch(type){
-  case'p':{
-   const dir=(color==='w')?1:-1;const start=(color==='w')?2:7;
-   if(dx===0&&!target){
-     if(ty-fy===dir)return true;
-     if(fy===start&&ty-fy===2*dir&&!gameState[files[fx]+(fy+dir)])return true;
-   }else if(Math.abs(dx)===1&&ty-fy===dir&&target)return true;
-   return false;
+  const fx=fileIndex(from[0]), fy=+from.slice(1);
+  const tx=fileIndex(to[0]),   ty=+to.slice(1);
+  const dx = Math.sign(tx-fx), dy = Math.sign(ty-fy);
+  let x=fx+dx, y=fy+dy;
+  while(x!==tx || y!==ty){
+    if(S[files[x]+y]) return false;
+    x+=dx; y+=dy;
   }
-  case'r':if(fx===tx||fy===ty)return clearPath(from,to);return false;
-  case'b':if(Math.abs(dx)===Math.abs(dy))return clearPath(from,to);return false;
-  case'q':if(fx===tx||fy===ty||Math.abs(dx)===Math.abs(dy))return clearPath(from,to);return false;
-  case'n':return(Math.abs(dx)===1&&Math.abs(dy)===2)||(Math.abs(dx)===2&&Math.abs(dy)===1);
-  case'k':{
-    if(Math.abs(dx)<=1&&Math.abs(dy)<=1)return true;
-    // castling
-    if(!ignoreCheck && !kingMoved[color]){
+  return true;
+}
+
+/* -------- ATTACK DETECTION (does NOT depend on occupancy at target) -------- */
+function squareAttackedByPawn(target, attackerColor){
+  const f = target[0], r = +target.slice(1);
+  const x = fileIndex(f);
+  if(attackerColor==='w'){
+    // white pawns attack up (+1 rank)
+    const a1 = (files[x-1]||'') + (r-1);
+    const a2 = (files[x+1]||'') + (r-1);
+    return (S[a1]==='wp') || (S[a2]==='wp');
+  }else{
+    // black pawns attack down (-1 rank)
+    const a1 = (files[x-1]||'') + (r+1);
+    const a2 = (files[x+1]||'') + (r+1);
+    return (S[a1]==='bp') || (S[a2]==='bp');
+  }
+}
+
+function squareAttackedByKnight(target, attackerColor){
+  const f = target[0], r = +target.slice(1);
+  const x = fileIndex(f), y = r;
+  const jumps = [[1,2],[2,1],[-1,2],[-2,1],[1,-2],[2,-1],[-1,-2],[-2,-1]];
+  for(const [dx,dy] of jumps){
+    const nf = files[x+dx]; const nr = y+dy;
+    if(!nf || nr<1 || nr>8) continue;
+    if(S[nf+nr] === attackerColor+'n') return true;
+  }
+  return false;
+}
+
+function squareAttackedBySlider(target, attackerColor, deltas){
+  const tfx=fileIndex(target[0]), tfy=+target.slice(1);
+  for(const [dx,dy] of deltas){
+    let x=tfx+dx, y=tfy+dy;
+    while(x>=0 && x<8 && y>=1 && y<=8){
+      const sq = files[x]+y;
+      const p = S[sq];
+      if(p){
+        if(colorOf(p)===attackerColor){
+          const t = typeOf(p);
+          // rook lines
+          if((dx===0||dy===0) && (t==='r'||t==='q')) return true;
+          // bishop diagonals
+          if((dx!==0&&dy!==0) && (t==='b'||t==='q')) return true;
+        }
+        break; // blocked
+      }
+      x+=dx; y+=dy;
+    }
+  }
+  return false;
+}
+
+function squareAttackedByKing(target, attackerColor){
+  const f = target[0], r = +target.slice(1);
+  const x = fileIndex(f), y = r;
+  for(let dx=-1; dx<=1; dx++){
+    for(let dy=-1; dy<=1; dy++){
+      if(dx===0 && dy===0) continue;
+      const nf = files[x+dx]; const nr = y+dy;
+      if(!nf || nr<1 || nr>8) continue;
+      if(S[nf+nr] === attackerColor+'k') return true;
+    }
+  }
+  return false;
+}
+
+function isSquareAttacked(target, colorDefender){
+  const attacker = (colorDefender==='w') ? 'b' : 'w';
+  // Pawns
+  if(squareAttackedByPawn(target, attacker)) return true;
+  // Knights
+  if(squareAttackedByKnight(target, attacker)) return true;
+  // Rooks / Queens (orthogonal)
+  if(squareAttackedBySlider(target, attacker, [[1,0],[-1,0],[0,1],[0,-1]])) return true;
+  // Bishops / Queens (diagonals)
+  if(squareAttackedBySlider(target, attacker, [[1,1],[1,-1],[-1,1],[-1,-1]])) return true;
+  // Kings
+  if(squareAttackedByKing(target, attacker)) return true;
+  return false;
+}
+
+function kingSquare(color){
+  for(const [sq,p] of Object.entries(S)) if(p===color+'k') return sq;
+  return null;
+}
+function kingInCheck(color){
+  const ksq = kingSquare(color);
+  return isSquareAttacked(ksq, color);
+}
+
+/* ------------------------- MOVE LEGALITY (incl. castling) ------------------------- */
+function isLegalMove(from,to){
+  const piece = S[from]; if(!piece) return false;
+  const color = colorOf(piece); if(color!==turn) return false;
+  const type = typeOf(piece);
+  const fx=fileIndex(from[0]), fy=+from.slice(1);
+  const tx=fileIndex(to[0]),   ty=+to.slice(1);
+  if(tx<0||tx>7||ty<1||ty>8) return false;
+  const dx=tx-fx, dy=ty-fy;
+  const target = S[to];
+  if(target && colorOf(target)===color) return false;
+
+  switch(type){
+    case 'p':{
+      const dir = (color==='w')?1:-1;
+      const start = (color==='w')?2:7;
+      // forward
+      if(dx===0 && !target){
+        if(ty-fy===dir) break; // ok
+        if(fy===start && ty-fy===2*dir && !S[files[fx]+(fy+dir)]) break; // ok
+        return false;
+      }
+      // capture
+      if(Math.abs(dx)===1 && ty-fy===dir && target) break;
+      return false;
+    }
+    case 'r':
+      if(!(fx===tx || fy===ty) || !clearPath(from,to)) return false;
+      break;
+    case 'b':
+      if(!(Math.abs(dx)===Math.abs(dy)) || !clearPath(from,to)) return false;
+      break;
+    case 'q':
+      if(!((fx===tx||fy===ty)||(Math.abs(dx)===Math.abs(dy))) || !clearPath(from,to)) return false;
+      break;
+    case 'n':
+      if(!((Math.abs(dx)===1&&Math.abs(dy)===2)||(Math.abs(dx)===2&&Math.abs(dy)===1))) return false;
+      break;
+    case 'k':{
+      // normal king step
+      if(Math.abs(dx)<=1 && Math.abs(dy)<=1) break;
+      // castling attempt
       if(dy===0 && Math.abs(dx)===2){
-        const side=(dx>0)?'h':'a';
-        const rookSq=side+(color==='w'?1:8);
-        const rook=gameState[rookSq];
-        if(rook===color+'r'&&!rookMoved[rookSq]){
-          const between=(dx>0)?['f','g']:['b','c','d'];
-          if(between.every(f=>!gameState[f+(color==='w'?1:8)]) &&
-             !isKingInCheck(color) &&
-             !between.some(f=>squareAttacked(f+(color==='w'?1:8),color))){
-             return true;
-          }
+        if(kingMoved[color]) return false;
+        const rank = (color==='w')?1:8;
+        if(fy!==rank || ty!==rank) return false;
+        if(tx>fx){ // king-side: e->g with rook at h
+          const rookSq = 'h'+rank;
+          if(S[rookSq]!==color+'r' || rookMoved[rookSq]) return false;
+          if(S['f'+rank]||S['g'+rank]) return false; // empty between
+          if(kingInCheck(color)) return false; // not currently in check
+          if(isSquareAttacked('f'+rank,color) || isSquareAttacked('g'+rank,color)) return false;
+          break;
+        }else{ // queen-side: e->c with rook at a
+          const rookSq = 'a'+rank;
+          if(S[rookSq]!==color+'r' || rookMoved[rookSq]) return false;
+          if(S['d'+rank]||S['c'+rank]||S['b'+rank]) return false;
+          if(kingInCheck(color)) return false;
+          if(isSquareAttacked('d'+rank,color) || isSquareAttacked('c'+rank,color)) return false;
+          break;
         }
       }
+      return false;
     }
-    return false;
   }
- }
- return false;
+
+  // simulate to ensure our own king not left in check
+  const snap = structuredClone(S);
+  S[to] = S[from]; delete S[from];
+  const illegal = kingInCheck(color);
+  S = snap;
+  return !illegal;
 }
 
-function movePiece(from,to){
- const piece=gameState[from];
- const color=colorOf(piece);
- // castling move
- if(typeOf(piece)==='k' && Math.abs(index(to[0])-index(from[0]))===2){
-   const y=(color==='w'?1:8);
-   if(to==='g'+y){ // kingside
-     gameState['f'+y]=gameState['h'+y];delete gameState['h'+y];
-   }else if(to==='c'+y){ // queenside
-     gameState['d'+y]=gameState['a'+y];delete gameState['a'+y];
-   }
-   kingMoved[color]=true;
- }
- if(typeOf(piece)==='r')rookMoved[from]=true;
- if(typeOf(piece)==='k')kingMoved[color]=true;
- gameState[to]=piece;delete gameState[from];
- // promotion
- if(typeOf(piece)==='p' && (to.endsWith('8')||to.endsWith('1')))
-   gameState[to]=color+'q';
+/* --------------------------------- APPLY MOVE --------------------------------- */
+function applyMove(from,to){
+  const piece = S[from];
+  const color = colorOf(piece);
+  const type  = typeOf(piece);
+  const fx=fileIndex(from[0]), tx=fileIndex(to[0]);
+  const rank = (color==='w')?1:8;
+
+  // mark rook/king moved
+  if(type==='k') kingMoved[color]=true;
+  if(type==='r' && (from==='a1'||from==='h1'||from==='a8'||from==='h8')) rookMoved[from]=true;
+
+  // castling rook move
+  if(type==='k' && Math.abs(tx-fx)===2){
+    if(to==='g'+rank){ S['f'+rank]=S['h'+rank]; delete S['h'+rank]; }
+    if(to==='c'+rank){ S['d'+rank]=S['a'+rank]; delete S['a'+rank]; }
+  }
+
+  // move piece
+  S[to]=S[from]; delete S[from];
+
+  // promotion (auto-queen)
+  if(type==='p' && (to.endsWith('8') || to.endsWith('1'))){
+    S[to]=color+'q';
+  }
 }
 
+/* ------------------------------ GAME STATE HELPERS ------------------------------ */
 function noLegalMoves(color){
- for(const [sq,p] of Object.entries(gameState)){
-   if(colorOf(p)!==color)continue;
-   for(const f of files)for(const r of ranks){
-     const t=f+r;
-     if(isLegalMove(sq,t) && !wouldCauseCheck(sq,t))return false;
-   }
- }
- return true;
+  for(const [sq,p] of Object.entries(S)){
+    if(colorOf(p)!==color) continue;
+    for(const f of files){
+      for(const r of ranks){
+        const t=f+r;
+        if(sq===t) continue;
+        if(isLegalMove(sq,t)) return false;
+      }
+    }
+  }
+  return true;
 }
 
-function enableDragAndDrop(){
- let dragged=null,source=null;
- document.querySelectorAll('.piece').forEach(pc=>{
-  pc.addEventListener('dragstart',e=>{
-    const sq=e.target.parentElement.id;
-    const p=gameState[sq];
-    if(colorOf(p)!==turn){e.preventDefault();return;}
-    dragged=e.target;source=sq;
-    setTimeout(()=>dragged.style.visibility='hidden',0);
+/* --------------------------------- DRAG & DROP --------------------------------- */
+function enableDnD(){
+  let dragged=null, source=null;
+
+  document.querySelectorAll('.piece').forEach(pc=>{
+    pc.addEventListener('dragstart', e=>{
+      const sq=e.target.parentElement.id;
+      const p=S[sq];
+      if(colorOf(p)!==turn){ e.preventDefault(); return; }
+      dragged=e.target; source=sq;
+      setTimeout(()=>dragged.style.visibility='hidden',0);
+    });
+    pc.addEventListener('dragend', ()=>{
+      if(dragged) dragged.style.visibility='visible';
+      dragged=null;
+    });
   });
-  pc.addEventListener('dragend',e=>{if(dragged)dragged.style.visibility='visible';dragged=null;});
- });
- document.querySelectorAll('.square').forEach(sq=>{
-  sq.addEventListener('dragover',e=>e.preventDefault());
-  sq.addEventListener('drop',e=>{
-   e.preventDefault();
-   const target=e.target.closest('.square').id;
-   if(!source||!dragged)return;
-   if(isLegalMove(source,target)&&!wouldCauseCheck(source,target)){
-     movePiece(source,target);
-     turn=(turn==='w')?'b':'w';
-     drawBoard();
-     if(isKingInCheck(turn)){
-       if(noLegalMoves(turn)){
-         alert(`Checkmate! ${(turn==='w')?'Black':'White'} wins.`);
-       }else{
-         alert(`${turn==='w'?'White':'Black'} is in check!`);
-       }
-     }else if(noLegalMoves(turn)){
-       alert('Stalemate!');
-     }
-   }
-   source=null;
+
+  document.querySelectorAll('.square').forEach(sq=>{
+    sq.addEventListener('dragover', e=>e.preventDefault());
+    sq.addEventListener('drop', e=>{
+      e.preventDefault();
+      const target = e.target.closest('.square').id;
+      if(!dragged || !source) return;
+      if(isLegalMove(source,target)){
+        applyMove(source,target);
+        turn = (turn==='w')?'b':'w';
+        draw();
+
+        // status / end checks
+        if(kingInCheck(turn)){
+          if(noLegalMoves(turn)){
+            alert(`Checkmate! ${(turn==='w')?'Black':'White'} wins.`);
+          }else{
+            hud.textContent = (turn==='w'?'White':'Black') + ' to move — CHECK!';
+          }
+        }else if(noLegalMoves(turn)){
+          alert('Stalemate!');
+        }
+      }
+      source=null;
+    });
   });
- });
 }
 
-drawBoard();
+/* -------------------------------- UI Controls -------------------------------- */
+document.getElementById('resetBtn').addEventListener('click', ()=>{
+  S = structuredClone(START);
+  turn='w';
+  kingMoved={w:false,b:false};
+  rookMoved={a1:false,h1:false,a8:false,h8:false};
+  draw();
+});
+
+/* --------------------------------- Init --------------------------------- */
+draw();
 </script>
 </body>
 </html>
