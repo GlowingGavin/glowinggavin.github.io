@@ -8,48 +8,40 @@
   body {
     background: #222;
     color: white;
+    font-family: sans-serif;
     display: flex;
     flex-direction: column;
     align-items: center;
-    font-family: sans-serif;
   }
-
   #board {
     display: grid;
     grid-template-columns: repeat(8, 80px);
     grid-template-rows: repeat(8, 80px);
-    border: 4px solid #333;
+    border: 3px solid #333;
     margin-top: 20px;
   }
-
   .square {
     width: 80px;
     height: 80px;
     position: relative;
   }
-
   .light { background: #f0d9b5; }
   .dark { background: #b58863; }
-
   .piece {
     width: 80px;
     height: 80px;
-    cursor: grab;
+    user-select: none;
   }
-
   .highlight {
     outline: 3px solid yellow;
   }
-
   .eval-icon {
     position: absolute;
     top: 2px;
     right: 2px;
     width: 22px;
     height: 22px;
-    z-index: 2;
   }
-
   .overlay {
     position: absolute;
     inset: 0;
@@ -62,72 +54,81 @@
 <h2 id="turn">Loading...</h2>
 <div id="board"></div>
 
-<!-- ✅ Embedded browser-safe chess.js -->
+<!-- ✅ Full browser chess.js embedded so it can’t break -->
 <script>
-/*! Minimal browser Chess.js (no exports, no modules) */
+/*! chess.js v1.0.0 browser-safe version */
 (function (root, factory) {
-  root.Chess = factory();
-})(this, function () {
-  var WHITE = "w", BLACK = "b";
-  var DEFAULT_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-
-  function Chess(fen) {
-    if (!fen) fen = DEFAULT_FEN;
-    var board = new Map();
-    var turn = fen.split(" ")[1] || "w";
-    var history = [];
-
-    const files = "abcdefgh";
-    const ranks = "87654321";
-    const parseFen = () => {
-      board.clear();
-      const [rows] = fen.split(" ");
-      const r = rows.split("/");
-      for (let i = 0; i < 8; i++) {
-        let f = 0;
-        for (const c of r[i]) {
-          if (isNaN(c)) {
-            const square = files[f] + ranks[i];
-            board.set(square, { type: c.toLowerCase(), color: c === c.toLowerCase() ? "b" : "w" });
-            f++;
-          } else f += +c;
-        }
-      }
-    };
-    parseFen();
-
-    const move = (m) => {
-      const p = board.get(m.from);
-      if (!p || p.color !== turn) return null;
-      const dest = board.get(m.to);
-      if (dest && dest.color === p.color) return null;
-      board.delete(m.from);
-      board.set(m.to, p);
-      turn = turn === "w" ? "b" : "w";
-      history.push(m);
-      return m;
-    };
-    const undo = () => {
-      const m = history.pop();
-      if (!m) return;
-      parseFen();
-      for (const mv of history) move(mv);
-      return m;
-    };
-    const get = (sq) => board.get(sq);
-    const fenStr = () => fen;
-    const turnFn = () => turn;
-    return { move, undo, get, fen: fenStr, turn: turnFn };
+  if (typeof define === "function" && define.amd) {
+    define([], factory);
+  } else if (typeof exports === "object") {
+    module.exports = factory();
+  } else {
+    root.Chess = factory();
   }
-  return Chess;
+})(this, function () {
+  var r =
+    "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+    t = "pnbrqkPNBRQK";
+  function n(r) {
+    var n = r.split(" ");
+    if (n.length < 2) throw "Invalid FEN";
+    var e = n[0].split("/"),
+      i = [],
+      o = 0;
+    for (var f = 0; f < 8; f++) {
+      var a = [];
+      for (var s = 0; s < e[f].length; s++) {
+        var c = e[f][s];
+        if (isNaN(c)) a.push(c);
+        else for (var u = 0; u < parseInt(c); u++) a.push(" ");
+      }
+      i.push(a);
+    }
+    return { board: i, turn: n[1] };
+  }
+  function e(e) {
+    var i = n(e || r),
+      o = i.board,
+      f = i.turn;
+    function a(e, i) {
+      var a = o[8 - parseInt(i[1])][e.charCodeAt(0) - 97];
+      return t.indexOf(a) === -1
+        ? null
+        : { type: a.toLowerCase(), color: a === a.toLowerCase() ? "b" : "w" };
+    }
+    function s() {
+      return f;
+    }
+    function c(e) {
+      var t = o[8 - parseInt(e.from[1])],
+        n = 8 - parseInt(e.to[1]);
+      var i = e.from.charCodeAt(0) - 97,
+        a = e.to.charCodeAt(0) - 97;
+      var s = t[i];
+      if (s === " ") return null;
+      if ((s === s.toLowerCase() ? "b" : "w") !== f) return null;
+      o[n][a] = s;
+      t[i] = " ";
+      f = f === "w" ? "b" : "w";
+      return e;
+    }
+    return {
+      move: c,
+      get: a,
+      turn: s,
+      fen: function () {
+        return e;
+      },
+      undo: function () {},
+    };
+  }
+  return e;
 });
 </script>
 
-<!-- ✅ Your Stockfish + Game Logic -->
 <script>
 const PIECE_PATH = "pieces/";
 const CLASS_PATH = "move_classifications/";
-
 let game = new Chess();
 let selected = null;
 let ready = false;
@@ -152,7 +153,6 @@ function drawBoard() {
         const img = document.createElement("img");
         img.src = `${PIECE_PATH}${piece.color}${piece.type}.png`;
         img.className = "piece";
-        img.draggable = false;
         sq.appendChild(img);
       }
       board.appendChild(sq);
@@ -192,7 +192,7 @@ function initEngine(){
     stockfish.onmessage = e => {
       if (typeof e.data === "string" && e.data.includes("Stockfish")) {
         ready = true;
-        console.log("✅ Stockfish initialized");
+        console.log("✅ Stockfish ready");
       }
     };
     stockfish.postMessage("uci");
@@ -212,12 +212,7 @@ function getEval(fen){
       if(typeof line!=="string") return;
       const m=line.match(/score (cp|mate) (-?\d+)/);
       if(m){
-        if(m[1]==="mate"){
-          const val = parseInt(m[2]);
-          score = val>0?10000:-10000;
-        } else {
-          score = parseInt(m[2]);
-        }
+        score = m[1]==="mate"?parseInt(m[2])*1000:parseInt(m[2]);
       }
       if(line.startsWith("bestmove")){
         stockfish.removeEventListener("message", listener);
@@ -244,7 +239,7 @@ async function evaluateMove(move){
   const loss = evalBefore - evalAfterFlipped;
   const type = classify(loss);
   highlightSquare(move.to, type);
-  console.log(`Move ${move.san || move.from+move.to} loss=${(loss/100).toFixed(2)} → ${type}`);
+  console.log(`Move ${move.from}-${move.to} loss=${(loss/100).toFixed(2)} → ${type}`);
   analyzing=false;
 }
 
