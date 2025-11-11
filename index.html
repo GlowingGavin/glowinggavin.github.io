@@ -53,7 +53,6 @@ const ranks = [8,7,6,5,4,3,2,1];
 const board = document.getElementById('board');
 const turnDisplay = document.getElementById('turn');
 
-// Basic starting position
 let startPos = {
   a8: 'br', b8: 'bn', c8: 'bb', d8: 'bq', e8: 'bk', f8: 'bb', g8: 'bn', h8: 'br',
   a7: 'bp', b7: 'bp', c7: 'bp', d7: 'bp', e7: 'bp', f7: 'bp', g7: 'bp', h7: 'bp',
@@ -62,7 +61,7 @@ let startPos = {
 };
 
 let gameState = structuredClone(startPos);
-let turn = 'w'; // w or b
+let turn = 'w';
 
 function drawBoard() {
   board.innerHTML = '';
@@ -88,64 +87,11 @@ function drawBoard() {
     }
   }
   turnDisplay.textContent = (turn === 'w') ? 'White to move' : 'Black to move';
+  enableDragAndDrop(); // ✅ reattach events
 }
 
-function isInside(f, r) {
-  return files.includes(f) && r >= 1 && r <= 8;
-}
-
-function pieceColor(piece) {
-  return piece ? piece[0] : null;
-}
-
-function pieceType(piece) {
-  return piece ? piece[1] : null;
-}
-
-// simplified move legality checks
-function isLegalMove(from, to) {
-  const piece = gameState[from];
-  if (!piece) return false;
-  const color = pieceColor(piece);
-  const type = pieceType(piece);
-  const fx = files.indexOf(from[0]);
-  const fy = parseInt(from[1]);
-  const tx = files.indexOf(to[0]);
-  const ty = parseInt(to[1]);
-  const dx = tx - fx;
-  const dy = ty - fy;
-  const targetPiece = gameState[to];
-  if (targetPiece && pieceColor(targetPiece) === color) return false; // can't capture own
-
-  // movement logic
-  switch(type) {
-    case 'p': // pawn
-      let dir = (color === 'w') ? 1 : -1;
-      let startRank = (color === 'w') ? 2 : 7;
-      if (dx === 0 && !targetPiece) {
-        if (ty - fy === dir) return true;
-        if (fy === startRank && ty - fy === 2 * dir &&
-            !gameState[files[fx] + (fy + dir)]) return true;
-      } else if (Math.abs(dx) === 1 && ty - fy === dir && targetPiece) return true;
-      return false;
-    case 'r': // rook
-      if (fx === tx || fy === ty) return clearPath(from, to);
-      return false;
-    case 'b': // bishop
-      if (Math.abs(dx) === Math.abs(dy)) return clearPath(from, to);
-      return false;
-    case 'q': // queen
-      if (fx === tx || fy === ty || Math.abs(dx) === Math.abs(dy))
-        return clearPath(from, to);
-      return false;
-    case 'n': // knight
-      return (Math.abs(dx) === 1 && Math.abs(dy) === 2) ||
-             (Math.abs(dx) === 2 && Math.abs(dy) === 1);
-    case 'k': // king
-      return Math.abs(dx) <= 1 && Math.abs(dy) <= 1;
-  }
-  return false;
-}
+function pieceColor(piece) { return piece ? piece[0] : null; }
+function pieceType(piece) { return piece ? piece[1] : null; }
 
 function clearPath(from, to) {
   const fx = files.indexOf(from[0]);
@@ -164,44 +110,91 @@ function clearPath(from, to) {
   return true;
 }
 
-let draggedPiece = null;
-let sourceSquare = null;
+function isLegalMove(from, to) {
+  const piece = gameState[from];
+  if (!piece) return false;
+  const color = pieceColor(piece);
+  const type = pieceType(piece);
+  const fx = files.indexOf(from[0]);
+  const fy = parseInt(from[1]);
+  const tx = files.indexOf(to[0]);
+  const ty = parseInt(to[1]);
+  const dx = tx - fx;
+  const dy = ty - fy;
+  const targetPiece = gameState[to];
+  if (targetPiece && pieceColor(targetPiece) === color) return false;
 
-document.addEventListener('dragstart', e => {
-  if (!e.target.classList.contains('piece')) return;
-  const sq = e.target.parentElement.id;
-  const piece = gameState[sq];
-  if (pieceColor(piece) !== turn) {
-    e.preventDefault();
-    return;
+  switch(type) {
+    case 'p': { // pawn
+      const dir = (color === 'w') ? 1 : -1;
+      const startRank = (color === 'w') ? 2 : 7;
+      if (dx === 0 && !targetPiece) {
+        if (ty - fy === dir) return true;
+        if (fy === startRank && ty - fy === 2 * dir &&
+            !gameState[files[fx] + (fy + dir)]) return true;
+      } else if (Math.abs(dx) === 1 && ty - fy === dir && targetPiece) return true;
+      return false;
+    }
+    case 'r':
+      if (fx === tx || fy === ty) return clearPath(from, to);
+      return false;
+    case 'b':
+      if (Math.abs(dx) === Math.abs(dy)) return clearPath(from, to);
+      return false;
+    case 'q':
+      if (fx === tx || fy === ty || Math.abs(dx) === Math.abs(dy))
+        return clearPath(from, to);
+      return false;
+    case 'n':
+      return (Math.abs(dx) === 1 && Math.abs(dy) === 2) ||
+             (Math.abs(dx) === 2 && Math.abs(dy) === 1);
+    case 'k':
+      return Math.abs(dx) <= 1 && Math.abs(dy) <= 1;
   }
-  draggedPiece = e.target;
-  sourceSquare = sq;
-  setTimeout(() => (draggedPiece.style.visibility = 'hidden'), 0);
-});
+  return false;
+}
 
-document.addEventListener('dragend', e => {
-  if (draggedPiece) draggedPiece.style.visibility = 'visible';
-  draggedPiece = null;
-});
+// 🧩 Drag-and-drop handlers reattached each redraw
+function enableDragAndDrop() {
+  let draggedPiece = null;
+  let sourceSquare = null;
 
-document.querySelectorAll('.square').forEach(sq =>
-  sq.addEventListener('dragover', e => e.preventDefault())
-);
+  document.querySelectorAll('.piece').forEach(piece => {
+    piece.addEventListener('dragstart', e => {
+      const sq = e.target.parentElement.id;
+      const pieceCode = gameState[sq];
+      if (pieceColor(pieceCode) !== turn) {
+        e.preventDefault();
+        return;
+      }
+      draggedPiece = e.target;
+      sourceSquare = sq;
+      setTimeout(() => (draggedPiece.style.visibility = 'hidden'), 0);
+    });
 
-board.addEventListener('drop', e => {
-  e.preventDefault();
-  const targetSquare = e.target.closest('.square').id;
-  if (!draggedPiece || !sourceSquare) return;
+    piece.addEventListener('dragend', e => {
+      if (draggedPiece) draggedPiece.style.visibility = 'visible';
+      draggedPiece = null;
+    });
+  });
 
-  if (isLegalMove(sourceSquare, targetSquare)) {
-    gameState[targetSquare] = gameState[sourceSquare];
-    delete gameState[sourceSquare];
-    turn = (turn === 'w') ? 'b' : 'w';
-    drawBoard();
-  }
-  sourceSquare = null;
-});
+  document.querySelectorAll('.square').forEach(sq => {
+    sq.addEventListener('dragover', e => e.preventDefault());
+    sq.addEventListener('drop', e => {
+      e.preventDefault();
+      const targetSquare = e.target.closest('.square').id;
+      if (!sourceSquare || !draggedPiece) return;
+
+      if (isLegalMove(sourceSquare, targetSquare)) {
+        gameState[targetSquare] = gameState[sourceSquare];
+        delete gameState[sourceSquare];
+        turn = (turn === 'w') ? 'b' : 'w';
+        drawBoard();
+      }
+      sourceSquare = null;
+    });
+  });
+}
 
 drawBoard();
 </script>
