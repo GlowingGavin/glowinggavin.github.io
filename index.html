@@ -2,188 +2,223 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>AlienGamer Chess Review</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AlienGamer Chess</title>
 <style>
-  body{background:#1a1a1a;color:#fff;font-family:sans-serif;text-align:center}
-  #board{display:grid;grid-template-columns:repeat(8,80px);grid-template-rows:repeat(8,80px);
-    width:640px;height:640px;margin:20px auto;border:4px solid #333}
-  .square{width:80px;height:80px;position:relative}
-  .light{background:#f0d9b5}.dark{background:#b58863}
-  .piece{width:100%;height:100%;cursor:grab;user-select:none}
-  .overlay{position:absolute;inset:0;opacity:.35}
-  .moveIcon{position:absolute;top:2px;right:2px;width:24px;height:24px;z-index:5}
-  #turn{font-size:22px;margin-top:10px}
+  body {
+    background: #222;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: white;
+    font-family: sans-serif;
+  }
+  #board {
+    display: grid;
+    grid-template-columns: repeat(8, 80px);
+    grid-template-rows: repeat(8, 80px);
+    border: 4px solid #333;
+    margin-top: 20px;
+  }
+  .square {
+    width: 80px;
+    height: 80px;
+    position: relative;
+  }
+  .light { background: #f0d9b5; }
+  .dark { background: #b58863; }
+  .piece {
+    width: 80px;
+    height: 80px;
+    cursor: grab;
+  }
+  .highlight {
+    outline: 3px solid yellow;
+  }
+  .eval-icon {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 22px;
+    height: 22px;
+  }
+  .overlay {
+    position: absolute;
+    inset: 0;
+    opacity: 0.35;
+    border-radius: 2px;
+  }
 </style>
 </head>
 <body>
-<h2>♟ AlienGamer Chess Review</h2>
+<h2 id="turn">Loading...</h2>
 <div id="board"></div>
-<div id="turn"></div>
 
+<!-- Chess + Stockfish -->
 <script src="./js/chess.js"></script>
 <script>
-// === Global state ===
+if (typeof Chess === "undefined") {
+  alert("❌ chess.js not found or invalid! Make sure it's the browser version.");
+}
+</script>
+<script>
+const PIECE_PATH = "pieces/";
+const CLASS_PATH = "move_classifications/";
+
 let game = new Chess();
+let selected = null;
+let ready = false;
+let stockfish;
+let analyzing = false;
+
 const board = document.getElementById("board");
-const turnDisplay = document.getElementById("turn");
-let engine, Engine, ready=false;
+const turnEl = document.getElementById("turn");
 
-// === Color map ===
-const evalColors={
-  best:"#90ee90",excellent:"#4caf50",good:"#2e8b57",
-  inaccuracy:"#ffe700",mistake:"#ff9800",blunder:"#ff0000"
-};
-function classifyCPL(cpl){
-  const cp=Math.max(0,Math.abs(cpl));
-  if(cp<20)return"best";
-  if(cp<60)return"excellent";
-  if(cp<120)return"good";
-  if(cp<250)return"inaccuracy";
-  if(cp<500)return"mistake";
-  return"blunder";
-}
-
-// === Engine wrapper with queue ===
-function makeEngine(worker){
-  let pending=Promise.resolve();
-  const send=(lines)=>{
-    pending=pending.then(()=>new Promise(resolve=>{
-      let score=null;
-      const onMsg=e=>{
-        const msg=e.data;
-        if(typeof msg!=="string")return;
-        if(/score (cp|mate)/.test(msg)){
-          const mMate=msg.match(/score mate (-?\d+)/);
-          const mCp=msg.match(/score cp (-?\d+)/);
-          if(mMate){
-            const n=parseInt(mMate[1],10);
-            score=n>0?100000:-100000;
-          }else if(mCp){
-            score=parseInt(mCp[1],10);
-          }
-        }
-        if(msg.startsWith("bestmove")){
-          worker.removeEventListener("message",onMsg);
-          resolve(score);
-        }
-      };
-      worker.addEventListener("message",onMsg);
-      for(const l of lines)worker.postMessage(l);
-    }));
-    return pending;
-  };
-  const init=async()=>{
-    await send(["uci"]);await send(["isready"]);
-    await send(["setoption name Threads value 1"]);
-    await send(["setoption name Hash value 32"]);
-    await send(["setoption name UCI_AnalyseMode value true"]);
-    await send(["isready"]);
-  };
-  return{send,init};
-}
-
-// === Utility ===
-function moveToUci(m){return m.from+m.to+(m.promotion?m.promotion:"");}
-async function evalAt(fen,depth,forced=null){
-  const lines=["position fen "+fen,
-    forced?`go depth ${depth} searchmoves ${forced}`:`go depth ${depth}`];
-  return await Engine.send(lines);
-}
-async function cplForMove(fenPrev,uciMove,depth=12){
-  const best=await evalAt(fenPrev,depth);
-  const yours=await evalAt(fenPrev,depth,uciMove);
-  if(best==null||yours==null)return null;
-  return best - yours;
-}
-
-// === Drawing ===
-function drawBoard(){
-  board.innerHTML="";
-  const ranks=[8,7,6,5,4,3,2,1],files=["a","b","c","d","e","f","g","h"];
-  for(const r of ranks){
-    for(const f of files){
-      const id=f+r;
-      const sq=document.createElement("div");
-      sq.id=id;
-      sq.className="square "+(((files.indexOf(f)+ranks.indexOf(r))%2===0?"light":"dark"));
-      const piece=game.get(id);
-      if(piece){
-        const img=document.createElement("img");
-        img.src=`pieces/${piece.color}${piece.type}.png`;
-        img.className="piece";
-        img.draggable=true;
+function drawBoard() {
+  board.innerHTML = "";
+  const ranks = [8,7,6,5,4,3,2,1];
+  const files = ["a","b","c","d","e","f","g","h"];
+  for (const r of ranks) {
+    for (const f of files) {
+      const id = f + r;
+      const sq = document.createElement("div");
+      sq.className = "square " + (((files.indexOf(f)+r)%2===0) ? "light" : "dark");
+      sq.dataset.square = id;
+      const piece = game.get(id);
+      if (piece) {
+        const img = document.createElement("img");
+        img.src = `${PIECE_PATH}${piece.color}${piece.type}.png`;
+        img.className = "piece";
+        img.draggable = false;
         sq.appendChild(img);
       }
       board.appendChild(sq);
     }
   }
-  turnDisplay.textContent=(game.turn()==="w")?"White to move":"Black to move";
-  enableDragDrop();
+  turnEl.textContent = game.turn() === "w" ? "White to move" : "Black to move";
 }
+drawBoard();
 
-// === Highlight square ===
-function highlightSquare(sq,type){
-  const el=document.getElementById(sq);
-  if(!el)return;
-  el.querySelectorAll(".overlay,.moveIcon").forEach(e=>e.remove());
-  const ov=document.createElement("div");
-  ov.className="overlay";
-  ov.style.background=evalColors[type]||"#8888";
-  const icon=document.createElement("img");
-  icon.className="moveIcon";
-  icon.src=`move_classifications/${type}.png`;
-  el.append(ov,icon);
-}
-
-// === Drag/drop ===
-function enableDragDrop(){
-  let dragged=null,source=null;
-  document.querySelectorAll(".piece").forEach(p=>{
-    p.addEventListener("dragstart",e=>{
-      source=e.target.parentElement.id;
-      dragged=e.target;
-      setTimeout(()=>dragged.style.visibility="hidden",0);
-    });
-    p.addEventListener("dragend",()=>{dragged.style.visibility="visible";dragged=null;});
-  });
-  document.querySelectorAll(".square").forEach(sq=>{
-    sq.addEventListener("dragover",e=>e.preventDefault());
-    sq.addEventListener("drop",async e=>{
-      e.preventDefault();
-      const target=e.target.closest(".square").id;
-      if(!source)return;
-      const fenPrev=game.fen();
-      const move=game.move({from:source,to:target,promotion:"q"});
-      if(move){
-        drawBoard();
-        const uci=moveToUci(move);
-        const cpl=await cplForMove(fenPrev,uci,12);
-        if(cpl!=null){
-          const label=classifyCPL(cpl);
-          console.log(`${move.color==='w'?'White':'Black'} ${move.san} → CPL ${cpl} → ${label}`);
-          highlightSquare(move.to,label);
-        }
-      }
-      source=null;
-    });
-  });
-}
-
-// === Init ===
-window.addEventListener("load",async()=>{
-  try{
-    engine=new Worker("./js/stockfish.js");
-    Engine=makeEngine(engine);
-    await Engine.init();
-    ready=true;
-    console.log("Stockfish ready ✅");
-    drawBoard();
-  }catch(err){
-    console.error("❌ Engine init failed",err);
-    turnDisplay.textContent="⚠️ Engine failed to start";
+board.addEventListener("click", async (e)=>{
+  const sq = e.target.closest(".square");
+  if(!sq) return;
+  const square = sq.dataset.square;
+  if(!selected){
+    const piece = game.get(square);
+    if(piece && piece.color === game.turn()){
+      selected = square;
+      sq.classList.add("highlight");
+    }
+  } else {
+    const move = {from:selected,to:square,promotion:"q"};
+    const legal = game.move(move);
+    document.querySelectorAll(".highlight").forEach(s=>s.classList.remove("highlight"));
+    if(legal){
+      drawBoard();
+      await evaluateMove(move);
+      selected=null;
+    } else {
+      selected=null;
+    }
   }
 });
+
+function initEngine(){
+  try {
+    stockfish = new Worker("./js/stockfish.js");
+    stockfish.onmessage = e => {
+      if (typeof e.data === "string" && e.data.includes("Stockfish")) {
+        ready = true;
+        console.log("✅ Stockfish initialized");
+      }
+    };
+    stockfish.postMessage("uci");
+    stockfish.postMessage("isready");
+  } catch (err) {
+    console.error("Stockfish failed:", err);
+  }
+}
+initEngine();
+
+function getEval(fen){
+  return new Promise((resolve)=>{
+    if(!ready){ resolve(null); return; }
+    let score = null;
+    const listener = (e)=>{
+      const line = e.data;
+      if(typeof line!=="string") return;
+      const m=line.match(/score (cp|mate) (-?\d+)/);
+      if(m){
+        if(m[1]==="mate"){
+          const val = parseInt(m[2]);
+          score = val>0?10000:-10000;
+        } else {
+          score = parseInt(m[2]);
+        }
+      }
+      if(line.startsWith("bestmove")){
+        stockfish.removeEventListener("message", listener);
+        resolve(score);
+      }
+    };
+    stockfish.addEventListener("message", listener);
+    stockfish.postMessage("position fen " + fen);
+    stockfish.postMessage("go depth 12");
+  });
+}
+
+async function evaluateMove(move){
+  if(analyzing) return;
+  analyzing = true;
+  const fenAfter = game.fen();
+  game.undo();
+  const fenBefore = game.fen();
+  game.move(move);
+  const evalBefore = await getEval(fenBefore);
+  const evalAfter = await getEval(fenAfter);
+  if(evalBefore==null || evalAfter==null){ analyzing=false; return; }
+  const evalAfterFlipped = -evalAfter;
+  const loss = evalBefore - evalAfterFlipped;
+  const type = classify(loss);
+  highlightSquare(move.to, type);
+  console.log(`Move ${move.san} loss=${(loss/100).toFixed(2)} → ${type}`);
+  analyzing=false;
+}
+
+function classify(loss){
+  loss = Math.abs(loss);
+  if(loss < 20) return "best";
+  if(loss < 60) return "excellent";
+  if(loss < 120) return "good";
+  if(loss < 250) return "inaccuracy";
+  if(loss < 500) return "mistake";
+  return "blunder";
+}
+
+function highlightSquare(sqName, type){
+  const el = [...document.querySelectorAll(".square")]
+    .find(e => e.dataset.square===sqName);
+  if(!el) return;
+  const overlay = document.createElement("div");
+  overlay.className="overlay";
+  overlay.style.background=getColor(type);
+  const icon = document.createElement("img");
+  icon.className="eval-icon";
+  icon.src=`${CLASS_PATH}${type}.png`;
+  el.appendChild(overlay);
+  el.appendChild(icon);
+}
+
+function getColor(type){
+  switch(type){
+    case "best": return "#80ff80";
+    case "excellent": return "#40ff40";
+    case "good": return "#00aa00";
+    case "inaccuracy": return "#ffff00";
+    case "mistake": return "#ff8000";
+    case "blunder": return "#ff0000";
+  }
+}
 </script>
 </body>
 </html>
