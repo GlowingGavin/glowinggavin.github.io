@@ -4,141 +4,90 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AlienGamer Chess</title>
+
+<!-- ✅ Use verified CDN versions -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chessboardjs@1.0.0/www/css/chessboard-1.0.0.min.css">
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chess.js@1.0.0/dist/chess.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chessboardjs@1.0.0/www/js/chessboard-1.0.0.min.js"></script>
+
 <style>
   body {
-    background-color: #111;
-    color: white;
-    font-family: Arial, sans-serif;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 100vh;
+    background: radial-gradient(circle at center, #111 0%, #000 100%);
+    color: #fff;
+    text-align: center;
+    font-family: "Segoe UI", sans-serif;
+    margin: 0;
+    padding: 40px;
+  }
+
+  h2 {
+    margin-bottom: 10px;
   }
 
   #board {
-    display: grid;
-    grid-template-columns: repeat(8, 80px);
-    grid-template-rows: repeat(8, 80px);
+    width: 480px;
+    height: 480px;
+    margin: 20px auto;
     border: 4px solid #000;
-    margin-bottom: 20px;
+    box-shadow: 0 0 15px #0ff;
   }
 
-  .square {
-    width: 80px;
-    height: 80px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    user-select: none;
-  }
-
-  .light { background: #f0d9b5; }
-  .dark { background: #b58863; }
-
-  .piece {
-    width: 72px;
-    height: 72px;
-    cursor: grab;
-  }
-
-  #turn {
-    font-size: 1.3rem;
+  #status {
+    margin-top: 15px;
+    font-size: 1.2em;
     letter-spacing: 1px;
   }
 </style>
 </head>
+
 <body>
+  <h2>♟ AlienGamer Chess ♟</h2>
   <div id="board"></div>
-  <div id="turn">Loading...</div>
+  <div id="status">Loading...</div>
 
-  <!-- Load chess.js for move logic -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/1.0.0/chess.min.js"></script>
+<script>
+$(function() {
+  const game = new Chess();
 
-  <script>
-  window.addEventListener('DOMContentLoaded', () => {
-    const board = document.getElementById('board');
-    const turnDisplay = document.getElementById('turn');
-    const game = new Chess();
+  const config = {
+    draggable: true,
+    position: 'start',
+    pieceTheme: piece => `pieces/${piece.toLowerCase()}.png`,
+    onDragStart: (source, piece) => {
+      if (game.game_over()) return false;
+      if ((game.turn() === 'w' && piece.startsWith('b')) ||
+          (game.turn() === 'b' && piece.startsWith('w')))
+        return false;
+    },
+    onDrop: (source, target) => {
+      const move = game.move({ from: source, to: target, promotion: 'q' });
+      if (move === null) return 'snapback';
+      updateStatus();
+    },
+    onSnapEnd: () => board.position(game.fen())
+  };
 
-    const files = ['a','b','c','d','e','f','g','h'];
-    const ranks = [8,7,6,5,4,3,2,1];
+  const board = Chessboard('board', config);
 
-    function drawBoard() {
-      board.innerHTML = '';
-      for (let r of ranks) {
-        for (let f of files) {
-          const square = document.createElement('div');
-          square.classList.add('square');
-          if ((files.indexOf(f) + ranks.indexOf(r)) % 2 === 0)
-            square.classList.add('light');
-          else
-            square.classList.add('dark');
+  function updateStatus() {
+    let status = '';
+    const moveColor = game.turn() === 'w' ? 'White' : 'Black';
 
-          const id = f + r;
-          square.id = id;
-
-          const piece = game.get(id);
-          if (piece) {
-            const img = document.createElement('img');
-            img.src = `pieces/${piece.color}${piece.type}.png`;
-            img.classList.add('piece');
-            img.draggable = true;
-            square.appendChild(img);
-          }
-          board.appendChild(square);
-        }
-      }
-      turnDisplay.textContent = game.turn() === 'w' ? 'White to move' : 'Black to move';
+    if (game.in_checkmate()) {
+      status = `Checkmate! ${moveColor === 'w' ? 'Black' : 'White'} wins!`;
+    } else if (game.in_draw()) {
+      status = 'Draw!';
+    } else {
+      status = `${moveColor} to move`;
+      if (game.in_check()) status += ` — ${moveColor} is in check!`;
     }
 
-    drawBoard();
+    $('#status').text(status);
+  }
 
-    let dragged = null;
-    let sourceSquare = null;
-
-    document.addEventListener('dragstart', e => {
-      if (e.target.classList.contains('piece')) {
-        dragged = e.target;
-        sourceSquare = e.target.parentElement.id;
-        const piece = game.get(sourceSquare);
-        if (!piece || piece.color !== game.turn()) {
-          e.preventDefault();
-          dragged = null;
-        } else {
-          setTimeout(() => (e.target.style.visibility = 'hidden'), 0);
-        }
-      }
-    });
-
-    document.addEventListener('dragend', e => {
-      if (dragged) dragged.style.visibility = 'visible';
-      dragged = null;
-    });
-
-    board.addEventListener('dragover', e => e.preventDefault());
-
-    board.addEventListener('drop', e => {
-      e.preventDefault();
-      const targetSquare = e.target.closest('.square').id;
-      if (!sourceSquare || !targetSquare) return;
-
-      const move = game.move({ from: sourceSquare, to: targetSquare, promotion: 'q' });
-      if (move) {
-        drawBoard();
-        if (game.isGameOver()) {
-          if (game.isCheckmate()) alert(`Checkmate! ${move.color === 'w' ? 'White' : 'Black'} wins!`);
-          else if (game.isDraw()) alert('Draw!');
-        }
-      }
-      sourceSquare = null;
-    });
-  });
-
-  // Debugging helper
-  window.onerror = (msg, src, line, col, err) => {
-    console.log('Error:', msg, 'at', src, line, col);
-  };
-  </script>
+  updateStatus();
+});
+</script>
 </body>
 </html>
