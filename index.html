@@ -15,6 +15,7 @@
     justify-content: center;
     height: 100vh;
   }
+
   #board {
     display: grid;
     grid-template-columns: repeat(8, 80px);
@@ -22,6 +23,7 @@
     border: 4px solid #000;
     margin-bottom: 20px;
   }
+
   .square {
     width: 80px;
     height: 80px;
@@ -30,13 +32,16 @@
     align-items: center;
     user-select: none;
   }
+
   .light { background: #f0d9b5; }
   .dark { background: #b58863; }
+
   .piece {
     width: 72px;
     height: 72px;
     cursor: grab;
   }
+
   #turn {
     font-size: 1.3rem;
     letter-spacing: 1px;
@@ -45,88 +50,95 @@
 </head>
 <body>
   <div id="board"></div>
-  <div id="turn">White to move</div>
+  <div id="turn">Loading...</div>
 
-<!-- Chess logic -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/1.0.0/chess.min.js"></script>
+  <!-- Load chess.js for move logic -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/1.0.0/chess.min.js"></script>
 
-<script>
-const board = document.getElementById('board');
-const turnDisplay = document.getElementById('turn');
-const game = new Chess(); // chess.js object
+  <script>
+  window.addEventListener('DOMContentLoaded', () => {
+    const board = document.getElementById('board');
+    const turnDisplay = document.getElementById('turn');
+    const game = new Chess();
 
-const files = ['a','b','c','d','e','f','g','h'];
-const ranks = [8,7,6,5,4,3,2,1];
+    const files = ['a','b','c','d','e','f','g','h'];
+    const ranks = [8,7,6,5,4,3,2,1];
 
-function drawBoard() {
-  board.innerHTML = '';
-  for (let r of ranks) {
-    for (let f of files) {
-      const square = document.createElement('div');
-      square.classList.add('square');
-      if ((files.indexOf(f) + ranks.indexOf(r)) % 2 === 0)
-        square.classList.add('light');
-      else
-        square.classList.add('dark');
+    function drawBoard() {
+      board.innerHTML = '';
+      for (let r of ranks) {
+        for (let f of files) {
+          const square = document.createElement('div');
+          square.classList.add('square');
+          if ((files.indexOf(f) + ranks.indexOf(r)) % 2 === 0)
+            square.classList.add('light');
+          else
+            square.classList.add('dark');
 
-      const id = f + r;
-      square.id = id;
+          const id = f + r;
+          square.id = id;
 
-      const piece = game.get(id);
-      if (piece) {
-        const img = document.createElement('img');
-        img.src = `pieces/${piece.color}${piece.type}.png`;
-        img.classList.add('piece');
-        img.draggable = true;
-        square.appendChild(img);
+          const piece = game.get(id);
+          if (piece) {
+            const img = document.createElement('img');
+            img.src = `pieces/${piece.color}${piece.type}.png`;
+            img.classList.add('piece');
+            img.draggable = true;
+            square.appendChild(img);
+          }
+          board.appendChild(square);
+        }
       }
-      board.appendChild(square);
+      turnDisplay.textContent = game.turn() === 'w' ? 'White to move' : 'Black to move';
     }
-  }
-  turnDisplay.textContent = game.turn() === 'w' ? 'White to move' : 'Black to move';
-}
 
-drawBoard();
-
-let dragged = null;
-let sourceSquare = null;
-
-document.addEventListener('dragstart', e => {
-  if (e.target.classList.contains('piece')) {
-    dragged = e.target;
-    sourceSquare = e.target.parentElement.id;
-    const piece = game.get(sourceSquare);
-    if (!piece || piece.color !== game.turn()) {
-      e.preventDefault();
-      dragged = null;
-    } else {
-      setTimeout(() => (e.target.style.visibility = 'hidden'), 0);
-    }
-  }
-});
-
-document.addEventListener('dragend', e => {
-  if (dragged) dragged.style.visibility = 'visible';
-  dragged = null;
-});
-
-board.addEventListener('dragover', e => e.preventDefault());
-
-board.addEventListener('drop', e => {
-  e.preventDefault();
-  const targetSquare = e.target.closest('.square').id;
-  if (!sourceSquare || !targetSquare) return;
-
-  const move = game.move({ from: sourceSquare, to: targetSquare, promotion: 'q' });
-  if (move) {
     drawBoard();
-    if (game.isGameOver()) {
-      if (game.isCheckmate()) alert(`Checkmate! ${move.color === 'w' ? 'White' : 'Black'} wins!`);
-      else if (game.isDraw()) alert('Draw!');
-    }
-  }
-  sourceSquare = null;
-});
-</script>
+
+    let dragged = null;
+    let sourceSquare = null;
+
+    document.addEventListener('dragstart', e => {
+      if (e.target.classList.contains('piece')) {
+        dragged = e.target;
+        sourceSquare = e.target.parentElement.id;
+        const piece = game.get(sourceSquare);
+        if (!piece || piece.color !== game.turn()) {
+          e.preventDefault();
+          dragged = null;
+        } else {
+          setTimeout(() => (e.target.style.visibility = 'hidden'), 0);
+        }
+      }
+    });
+
+    document.addEventListener('dragend', e => {
+      if (dragged) dragged.style.visibility = 'visible';
+      dragged = null;
+    });
+
+    board.addEventListener('dragover', e => e.preventDefault());
+
+    board.addEventListener('drop', e => {
+      e.preventDefault();
+      const targetSquare = e.target.closest('.square').id;
+      if (!sourceSquare || !targetSquare) return;
+
+      const move = game.move({ from: sourceSquare, to: targetSquare, promotion: 'q' });
+      if (move) {
+        drawBoard();
+        if (game.isGameOver()) {
+          if (game.isCheckmate()) alert(`Checkmate! ${move.color === 'w' ? 'White' : 'Black'} wins!`);
+          else if (game.isDraw()) alert('Draw!');
+        }
+      }
+      sourceSquare = null;
+    });
+  });
+
+  // Debugging helper
+  window.onerror = (msg, src, line, col, err) => {
+    console.log('Error:', msg, 'at', src, line, col);
+  };
+  </script>
 </body>
 </html>
