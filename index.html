@@ -14,7 +14,7 @@
     padding: 40px;
   }
   .leaderboard {
-    width: 480px;
+    width: 520px;
     background: #1a1a1d;
     border-radius: 15px;
     box-shadow: 0 0 15px rgba(0,0,0,0.5);
@@ -69,46 +69,47 @@
   </div>
 
 <script>
-  // --- Engine Ratings (edit these values anytime) ---
   const engines = [
-    {name: "stockfish", img: "lrg_stockfish@2x.png", rating: 3550},
-    {name: "lc0", img: "lrg_lc0@2x.png", rating: 3475},
-    {name: "torch", img: "lrg_torch@2x.png", rating: 3410},
-    {name: "obsidian", img: "lrg_obsidian@2x.png", rating: 3380},
-    {name: "berserk", img: "lrg_berserk@2x.png", rating: 3350},
-    {name: "rofchade", img: "lrg_rofchade@2x.png", rating: 3340},
-    {name: "stormphrax", img: "lrg_stormphrax@2x.png", rating: 3320},
-    {name: "plentychess", img: "lrg_plentychess@2x.png", rating: 3300},
-    {name: "halogen", img: "lrg_halogen@2x.png", rating: 3290},
-    {name: "equisetum", img: "lrg_equisetum@2x.png", rating: 3280},
-    {name: "uralochka", img: "lrg_uralochka@2x.png", rating: 3270},
-    {name: "clarity", img: "lrg_clarity@2x.png", rating: 3250},
-    {name: "rubi", img: "lrg_rubi@2x.png", rating: 3240},
-    {name: "caissa", img: "lrg_caissa@2x.png", rating: 3230},
-    {name: "blackmarlin", img: "lrg_blackmarlin@2x.png", rating: 3220},
-    {name: "renegade", img: "lrg_renegade@2x.png", rating: 3210},
-    {name: "patricia", img: "lrg_patricia@2x.png", rating: 3200},
-    {name: "revenge", img: "lrg_revenge@2x.png", rating: 3190},
-    {name: "wasp", img: "lrg_wasp@2x.png", rating: 3180},
-    {name: "velvet", img: "lrg_velvet@2x.png", rating: 3170},
-    {name: "integral", img: "lrg_integral@2x.png", rating: 3160},
-    {name: "seer", img: "lrg_seer@2x.png", rating: 3150},
-    {name: "weiss", img: "lrg_weiss@2x.png", rating: 3140},
-    {name: "ethereal", img: "lrg_ethereal@2x.png", rating: 3130},
-    {name: "minic", img: "lrg_minic@2x.png", rating: 3120},
-    {name: "akimbo", img: "lrg_akimbo@2x.png", rating: 3110},
-    {name: "tucano", img: "lrg_tucano@2x.png", rating: 3100},
-    {name: "igel", img: "lrg_igel@2x.png", rating: 3090},
-    {name: "reckless", img: "lrg_reckless@2x.png", rating: 3080},
-    {name: "viridithas", img: "lrg_viridithas@2x.png", rating: 3070},
-    {name: "clover", img: "lrg_clover@2x.png", rating: 3060},
-    {name: "dragon", img: "lrg_dragon@2x.png", rating: 3050}
+    {name: "stockfish", img: "lrg_stockfish@2x.png", rating: 3916},
+    {name: "torch", img: "lrg_torch@2x.png", rating: 3928},
+    {name: "reckless", img: "lrg_reckless@2x.png", rating: 3771},
+    {name: "obsidian", img: "lrg_obsidian@2x.png", rating: 3870},
+    {name: "lc0", img: "lrg_lc0@2x.png", rating: 3870},
+    {name: "integral", img: "lrg_integral@2x.png", rating: 3875},
+    {name: "plentychess", img: "lrg_plentychess@2x.png", rating: 3843},
+    {name: "berserk", img: "lrg_berserk@2x.png", rating: 3843},
+    {name: "caissa", img: "lrg_caissa@2x.png", rating: 3837},
+    {name: "dragon", img: "lrg_dragon@2x.png", rating: 3832},
+    {name: "viridithas", img: "lrg_viridithas@2x.png", rating: 3801},
+    {name: "rubi", img: "lrg_rubi@2x.png", rating: 3806},
+    {name: "halogen", img: "lrg_halogen@2x.png", rating: 3671},
+    {name: "stormphrax", img: "lrg_stormphrax@2x.png", rating: 3806},
+    {name: "uralochka", img: "lrg_uralochka@2x.png", rating: 3771},
+    {name: "clover", img: "lrg_clover@2x.png", rating: 3751},
+    {name: "ethereal", img: "lrg_ethereal@2x.png", rating: 3816},
+    {name: "rofchade", img: "lrg_rofchade@2x.png", rating: 3776},
+    {name: "velvet", img: "lrg_velvet@2x.png", rating: 3771},
+    {name: "seer", img: "lrg_seer@2x.png", rating: 3766},
+    {name: "igel", img: "lrg_igel@2x.png", rating: 3741},
+    {name: "renegade", img: "lrg_renegade@2x.png", rating: 3701},
+    {name: "akimbo", img: "lrg_akimbo@2x.png", rating: 3701},
+    {name: "blackmarlin", img: "lrg_blackmarlin@2x.png", rating: 3640},
+    {name: "clarity", img: "lrg_clarity@2x.png", rating: 3661},
+    {name: "minic", img: "lrg_minic@2x.png", rating: 3645},
+    {name: "winter", img: "lrg_winter@2x.png", rating: 3607},
+    {name: "equisetum", img: "lrg_equisetum@2x.png", rating: 3706},
+    {name: "tucano", img: "lrg_tucano@2x.png", rating: 3640},
+    {name: "weiss", img: "lrg_weiss@2x.png", rating: 3624},
+    {name: "patricia", img: "lrg_patricia@2x.png", rating: 3634},
+    {name: "revenge", img: "lrg_revenge@2x.png", rating: 3696},
+    {name: "stash", img: "lrg_stash@2x.png", rating: 3560},
+    {name: "wasp", img: "lrg_wasp@2x.png", rating: 3607}
   ];
 
-  // --- Sort and Render Leaderboard ---
+  // --- Sort & Render ---
   engines.sort((a, b) => b.rating - a.rating);
   const list = document.getElementById("engine-list");
-
+  list.innerHTML = "";
   engines.forEach((engine, i) => {
     const div = document.createElement("div");
     div.className = "entry";
