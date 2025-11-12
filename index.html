@@ -1,191 +1,87 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AlienGamer Chess – Full Legal Board</title>
+<meta charset="utf-8">
+<title>AlienGamer Chess — Two Player</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/1.0.0/chess.min.js"></script>
 <style>
-  body {
-    background:#111;color:#fff;font-family:Arial;
-    display:flex;flex-direction:column;align-items:center;justify-content:center;
-    min-height:100vh;margin:0;
-  }
-  #board {
-    display:grid;
-    grid-template-columns:repeat(8,80px);
-    grid-template-rows:repeat(8,80px);
-    border:4px solid #000;
-    margin-bottom:20px;
-  }
-  .square {
-    width:80px;height:80px;
-    display:flex;justify-content:center;align-items:center;
-    position:relative;user-select:none;
-  }
-  .light{background:#f0d9b5;}
-  .dark{background:#b58863;}
-  .piece{width:72px;height:72px;cursor:grab;}
-  #turn{font-size:1.3rem;}
-  .highlight {outline:3px solid #00ffcc;}
-  #promoMenu {
-    position: fixed;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    background: #222;
-    border: 2px solid #0ff;
-    border-radius: 10px;
-    display: none;
-    padding: 10px;
-    gap: 10px;
-    flex-wrap: wrap;
-    justify-content: center;
-  }
-  #promoMenu img {
-    width: 60px; height: 60px;
-    cursor: pointer;
-    border: 2px solid transparent;
-    border-radius: 6px;
-  }
-  #promoMenu img:hover {
-    border-color: #0ff;
-  }
+body{
+  background:#111;color:#fff;font-family:Arial;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  min-height:100vh;margin:0;
+}
+#board{
+  display:grid;
+  grid-template-columns:repeat(8,80px);
+  grid-template-rows:repeat(8,80px);
+  border:4px solid #000;
+}
+.square{width:80px;height:80px;display:flex;justify-content:center;align-items:center;}
+.light{background:#f0d9b5;} .dark{background:#b58863;}
+.piece{width:72px;height:72px;cursor:grab;}
+#turn{margin-top:10px;font-size:1.3rem;}
 </style>
 </head>
 <body>
-  <div id="board"></div>
-  <div id="turn">White to move</div>
-  <div id="promoMenu"></div>
+<div id="board"></div>
+<div id="turn">Loading…</div>
 
-  <!-- ✅ Load chess.js BEFORE your own script -->
-  <script src="https://cdn.jsdelivr.net/npm/chess.js@1.0.0/dist/chess.min.js"></script>
+<script>
+let game = new Chess();
+const board = document.getElementById("board");
+const turnDisplay = document.getElementById("turn");
 
-  <script>
-  const files=['a','b','c','d','e','f','g','h'];
-  const ranks=[8,7,6,5,4,3,2,1];
-  const board=document.getElementById('board');
-  const turnDisplay=document.getElementById('turn');
-  const promoMenu=document.getElementById('promoMenu');
-
-  const game=new Chess(); // ✅ now works because library is loaded first
-
-  function drawBoard(){
-    board.innerHTML='';
-    const position=game.board();
-    for(let r=0;r<8;r++){
-      for(let f=0;f<8;f++){
-        const id=files[f]+(8-r);
-        const sq=document.createElement('div');
-        sq.id=id;
-        sq.className='square '+(((f+r)%2===0)?'light':'dark');
-        const p=position[r][f];
-        if(p){
-          const img=document.createElement('img');
-          img.className='piece';
-          img.src=`pieces/${p.color}${p.type}.png`;
-          img.draggable=true;
-          sq.appendChild(img);
-        }
-        board.appendChild(sq);
+function drawBoard(){
+  board.innerHTML="";
+  const ranks=[8,7,6,5,4,3,2,1],files=["a","b","c","d","e","f","g","h"];
+  for(const r of ranks){
+    for(const f of files){
+      const sq=f+r;
+      const div=document.createElement("div");
+      div.id=sq;
+      div.className="square "+(((files.indexOf(f)+ranks.indexOf(r))%2===0?"light":"dark"));
+      const piece=game.get(sq);
+      if(piece){
+        const img=document.createElement("img");
+        img.src=`pieces/${piece.color}${piece.type}.png`;
+        img.className="piece";
+        img.draggable=true;
+        div.appendChild(img);
       }
-    }
-    turnDisplay.textContent = 
-      game.in_checkmate() ? "Checkmate!" :
-      game.in_stalemate() ? "Stalemate!" :
-      (game.in_check() ?
-        (game.turn()==='w' ? "White in Check!" : "Black in Check!") :
-        (game.turn()==='w' ? "White to move" : "Black to move"));
-    enableDnD();
-  }
-
-  function enableDnD(){
-    let dragged=null,source=null;
-    document.querySelectorAll('.piece').forEach(pc=>{
-      pc.addEventListener('dragstart',e=>{
-        const sq=e.target.parentElement.id;
-        if(game.turn()!==getPieceColor(sq)){e.preventDefault();return;}
-        dragged=e.target;source=sq;
-        setTimeout(()=>dragged.style.visibility='hidden',0);
-        highlightMoves(sq);
-      });
-      pc.addEventListener('dragend',()=>{
-        if(dragged) dragged.style.visibility='visible';
-        dragged=null;
-        clearHighlights();
-      });
-    });
-    document.querySelectorAll('.square').forEach(sq=>{
-      sq.addEventListener('dragover',e=>e.preventDefault());
-      sq.addEventListener('drop',e=>{
-        e.preventDefault();
-        const target=e.target.closest('.square').id;
-        if(!dragged||!source)return;
-
-        const piece=game.get(source);
-        const isPawn=piece && piece.type==='p';
-        const promotionRank=(piece.color==='w')? '8':'1';
-        if(isPawn && target[1]===promotionRank){
-          showPromotionMenu(piece.color,(choice)=>{
-            makeMove(source,target,choice);
-          });
-        } else {
-          makeMove(source,target,'q');
-        }
-        source=null;
-      });
-    });
-  }
-
-  function makeMove(from,to,promotion){
-    const move=game.move({from,to,promotion});
-    if(move){
-      drawBoard();
-      if(game.game_over()){
-        setTimeout(()=>{
-          alert(
-            game.in_checkmate() ? "Checkmate!" :
-            game.in_stalemate() ? "Stalemate!" :
-            game.in_draw() ? "Draw!" :
-            "Game Over"
-          );
-        },100);
-      }
+      board.appendChild(div);
     }
   }
+  turnDisplay.textContent=(game.turn()==="w")?"White to move":"Black to move";
+  enableDragDrop();
+}
 
-  function getPieceColor(square){
-    const piece=game.get(square);
-    return piece?piece.color:null;
-  }
-
-  function highlightMoves(square){
-    clearHighlights();
-    const moves=game.moves({square,verbose:true});
-    moves.forEach(m=>{
-      const el=document.getElementById(m.to);
-      if(el) el.classList.add('highlight');
+function enableDragDrop(){
+  let dragged=null,source=null;
+  document.querySelectorAll(".piece").forEach(p=>{
+    p.addEventListener("dragstart",e=>{
+      source=e.target.parentElement.id;
+      dragged=e.target;
+      setTimeout(()=>dragged.style.visibility="hidden",0);
     });
-  }
-
-  function clearHighlights(){
-    document.querySelectorAll('.square').forEach(sq=>sq.classList.remove('highlight'));
-  }
-
-  function showPromotionMenu(color,callback){
-    promoMenu.innerHTML='';
-    const pieces=['q','r','b','n'];
-    pieces.forEach(t=>{
-      const img=document.createElement('img');
-      img.src=`pieces/${color}${t}.png`;
-      img.onclick=()=>{
-        promoMenu.style.display='none';
-        callback(t);
-      };
-      promoMenu.appendChild(img);
+    p.addEventListener("dragend",()=>{dragged.style.visibility="visible";dragged=null;});
+  });
+  document.querySelectorAll(".square").forEach(sq=>{
+    sq.addEventListener("dragover",e=>e.preventDefault());
+    sq.addEventListener("drop",e=>{
+      e.preventDefault();
+      const target=e.target.closest(".square").id;
+      if(!source)return;
+      const move=game.move({from:source,to:target,promotion:"q"});
+      if(move){
+        drawBoard();
+      }
+      source=null;
     });
-    promoMenu.style.display='flex';
-  }
+  });
+}
 
-  drawBoard();
-  </script>
+window.addEventListener("load",drawBoard);
+</script>
 </body>
 </html>
