@@ -1,87 +1,127 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<title>AlienGamer Chess — Two Player</title>
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/1.0.0/chess.min.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Engine Leaderboard</title>
 <style>
-body{
-  background:#111;color:#fff;font-family:Arial;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  min-height:100vh;margin:0;
-}
-#board{
-  display:grid;
-  grid-template-columns:repeat(8,80px);
-  grid-template-rows:repeat(8,80px);
-  border:4px solid #000;
-}
-.square{width:80px;height:80px;display:flex;justify-content:center;align-items:center;}
-.light{background:#f0d9b5;} .dark{background:#b58863;}
-.piece{width:72px;height:72px;cursor:grab;}
-#turn{margin-top:10px;font-size:1.3rem;}
+  body {
+    font-family: 'Poppins', sans-serif;
+    background: #0e0e10;
+    color: #fff;
+    display: flex;
+    justify-content: center;
+    padding: 40px;
+  }
+  .leaderboard {
+    width: 480px;
+    background: #1a1a1d;
+    border-radius: 15px;
+    box-shadow: 0 0 15px rgba(0,0,0,0.5);
+    padding: 20px;
+  }
+  .leaderboard h2 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #00c3ff;
+  }
+  .entry {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #2a2a30;
+    padding: 10px 15px;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    transition: background 0.3s;
+  }
+  .entry:hover { background: #33333a; }
+  .entry-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .entry img {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    object-fit: cover;
+  }
+  .rank {
+    font-weight: 700;
+    color: #00c3ff;
+    width: 35px;
+    text-align: center;
+  }
+  .name {
+    font-weight: 600;
+    text-transform: capitalize;
+  }
+  .rating {
+    font-weight: 700;
+  }
 </style>
 </head>
 <body>
-<div id="board"></div>
-<div id="turn">Loading…</div>
+  <div class="leaderboard">
+    <h2>Engine Leaderboard</h2>
+    <div id="engine-list"></div>
+  </div>
 
 <script>
-let game = new Chess();
-const board = document.getElementById("board");
-const turnDisplay = document.getElementById("turn");
+  // --- Engine Ratings (edit these values anytime) ---
+  const engines = [
+    {name: "stockfish", img: "lrg_stockfish@2x.png", rating: 3550},
+    {name: "lc0", img: "lrg_lc0@2x.png", rating: 3475},
+    {name: "torch", img: "lrg_torch@2x.png", rating: 3410},
+    {name: "obsidian", img: "lrg_obsidian@2x.png", rating: 3380},
+    {name: "berserk", img: "lrg_berserk@2x.png", rating: 3350},
+    {name: "rofchade", img: "lrg_rofchade@2x.png", rating: 3340},
+    {name: "stormphrax", img: "lrg_stormphrax@2x.png", rating: 3320},
+    {name: "plentychess", img: "lrg_plentychess@2x.png", rating: 3300},
+    {name: "halogen", img: "lrg_halogen@2x.png", rating: 3290},
+    {name: "equisetum", img: "lrg_equisetum@2x.png", rating: 3280},
+    {name: "uralochka", img: "lrg_uralochka@2x.png", rating: 3270},
+    {name: "clarity", img: "lrg_clarity@2x.png", rating: 3250},
+    {name: "rubi", img: "lrg_rubi@2x.png", rating: 3240},
+    {name: "caissa", img: "lrg_caissa@2x.png", rating: 3230},
+    {name: "blackmarlin", img: "lrg_blackmarlin@2x.png", rating: 3220},
+    {name: "renegade", img: "lrg_renegade@2x.png", rating: 3210},
+    {name: "patricia", img: "lrg_patricia@2x.png", rating: 3200},
+    {name: "revenge", img: "lrg_revenge@2x.png", rating: 3190},
+    {name: "wasp", img: "lrg_wasp@2x.png", rating: 3180},
+    {name: "velvet", img: "lrg_velvet@2x.png", rating: 3170},
+    {name: "integral", img: "lrg_integral@2x.png", rating: 3160},
+    {name: "seer", img: "lrg_seer@2x.png", rating: 3150},
+    {name: "weiss", img: "lrg_weiss@2x.png", rating: 3140},
+    {name: "ethereal", img: "lrg_ethereal@2x.png", rating: 3130},
+    {name: "minic", img: "lrg_minic@2x.png", rating: 3120},
+    {name: "akimbo", img: "lrg_akimbo@2x.png", rating: 3110},
+    {name: "tucano", img: "lrg_tucano@2x.png", rating: 3100},
+    {name: "igel", img: "lrg_igel@2x.png", rating: 3090},
+    {name: "reckless", img: "lrg_reckless@2x.png", rating: 3080},
+    {name: "viridithas", img: "lrg_viridithas@2x.png", rating: 3070},
+    {name: "clover", img: "lrg_clover@2x.png", rating: 3060},
+    {name: "dragon", img: "lrg_dragon@2x.png", rating: 3050}
+  ];
 
-function drawBoard(){
-  board.innerHTML="";
-  const ranks=[8,7,6,5,4,3,2,1],files=["a","b","c","d","e","f","g","h"];
-  for(const r of ranks){
-    for(const f of files){
-      const sq=f+r;
-      const div=document.createElement("div");
-      div.id=sq;
-      div.className="square "+(((files.indexOf(f)+ranks.indexOf(r))%2===0?"light":"dark"));
-      const piece=game.get(sq);
-      if(piece){
-        const img=document.createElement("img");
-        img.src=`pieces/${piece.color}${piece.type}.png`;
-        img.className="piece";
-        img.draggable=true;
-        div.appendChild(img);
-      }
-      board.appendChild(div);
-    }
-  }
-  turnDisplay.textContent=(game.turn()==="w")?"White to move":"Black to move";
-  enableDragDrop();
-}
+  // --- Sort and Render Leaderboard ---
+  engines.sort((a, b) => b.rating - a.rating);
+  const list = document.getElementById("engine-list");
 
-function enableDragDrop(){
-  let dragged=null,source=null;
-  document.querySelectorAll(".piece").forEach(p=>{
-    p.addEventListener("dragstart",e=>{
-      source=e.target.parentElement.id;
-      dragged=e.target;
-      setTimeout(()=>dragged.style.visibility="hidden",0);
-    });
-    p.addEventListener("dragend",()=>{dragged.style.visibility="visible";dragged=null;});
+  engines.forEach((engine, i) => {
+    const div = document.createElement("div");
+    div.className = "entry";
+    div.innerHTML = `
+      <div class="entry-left">
+        <span class="rank">#${i+1}</span>
+        <img src="engine_logos/${engine.img}" alt="${engine.name}">
+        <span class="name">${engine.name}</span>
+      </div>
+      <span class="rating">${engine.rating}</span>
+    `;
+    list.appendChild(div);
   });
-  document.querySelectorAll(".square").forEach(sq=>{
-    sq.addEventListener("dragover",e=>e.preventDefault());
-    sq.addEventListener("drop",e=>{
-      e.preventDefault();
-      const target=e.target.closest(".square").id;
-      if(!source)return;
-      const move=game.move({from:source,to:target,promotion:"q"});
-      if(move){
-        drawBoard();
-      }
-      source=null;
-    });
-  });
-}
-
-window.addEventListener("load",drawBoard);
 </script>
 </body>
 </html>
