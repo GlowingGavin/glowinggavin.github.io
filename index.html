@@ -25,6 +25,7 @@
   .light{background:#f0d9b5;} .dark{background:#b58863;}
   .piece{width:72px;height:72px;cursor:grab;}
   #turn{font-size:1.3rem;}
+
   /* overlay + icon */
   .book-overlay {
     position:absolute;inset:0;
@@ -68,7 +69,9 @@ function drawBoard(){
       const p=S[id];
       if(p){
         const img=document.createElement('img');
-        img.className='piece';img.draggable=true;img.src=`pieces/${p}.png`;
+        img.className='piece';
+        img.draggable=true;
+        img.src=`pieces/${p}.png`;
         sq.appendChild(img);
       }
       board.appendChild(sq);
@@ -78,16 +81,37 @@ function drawBoard(){
   enableDnD();
 }
 
-// ---------- Move Logic ----------
-function colorOf(p){return p?p[0]:null;}
+// ---------- Helpers ----------
+function colorOf(p){
+  return (typeof p === 'string' && p.length >= 1) ? p[0] : null;
+}
 function idx(f){return files.indexOf(f);}
+
+// ---------- Simple SAN maker ----------
+function toSAN(piece, from, to){
+  if (!piece) return to;  // safety check
+  const type = piece[1];
+  switch (type) {
+    case 'p': return to;
+    case 'n': return 'N' + to;
+    case 'b': return 'B' + to;
+    case 'r': return 'R' + to;
+    case 'q': return 'Q' + to;
+    case 'k': return 'K' + to;
+    default:  return to;
+  }
+}
+
+// ---------- Move Logic ----------
 function isLegalMove(from,to){
-  const p=S[from];if(!p)return false;
-  if(colorOf(p)!==turn)return false;
-  return true; // simplified: assume valid for now (no rule enforcement)
+  const p=S[from];
+  if(!p) return false;
+  if(colorOf(p)!==turn) return false;
+  return true; // simplified: no rule enforcement yet
 }
 function applyMove(from,to){
-  S[to]=S[from];delete S[from];
+  S[to]=S[from];
+  delete S[from];
 }
 
 // ---------- Drag & Drop ----------
@@ -100,7 +124,10 @@ function enableDnD(){
       dragged=e.target;source=sq;
       setTimeout(()=>dragged.style.visibility='hidden',0);
     });
-    pc.addEventListener('dragend',()=>{if(dragged)dragged.style.visibility='visible';dragged=null;});
+    pc.addEventListener('dragend',()=>{
+      if(dragged) dragged.style.visibility='visible';
+      dragged=null;
+    });
   });
   document.querySelectorAll('.square').forEach(sq=>{
     sq.addEventListener('dragover',e=>e.preventDefault());
@@ -122,20 +149,6 @@ function enableDnD(){
   });
 }
 
-// ---------- Simple SAN maker ----------
-function toSAN(piece,from,to){
-  const type=piece[1];
-  const f=from[0],r=from[1];
-  switch(type){
-    case 'p':return to;
-    case 'n':return 'N'+to;
-    case 'b':return 'B'+to;
-    case 'r':return 'R'+to;
-    case 'q':return 'Q'+to;
-    case 'k':return 'K'+to;
-  }
-}
-
 // ---------- Book Move Detection ----------
 async function loadOpenings(){
   const res=await fetch('openings.csv');
@@ -143,7 +156,7 @@ async function loadOpenings(){
   const lines=text.trim().split(/\r?\n/);
   openings=lines.slice(1).map(l=>{
     const [name,movesStr]=l.split(',');
-    if(!movesStr)return null;
+    if(!movesStr) return null;
     return {name:name.trim(),moves:movesStr.trim().split(' ')};
   }).filter(Boolean);
 }
@@ -156,7 +169,7 @@ function checkBookMove(targetSquare){
   });
   if(inBook){
     const sq=document.getElementById(targetSquare);
-    if(!sq)return;
+    if(!sq) return;
     const overlay=document.createElement('div');
     overlay.className='book-overlay';
     const icon=document.createElement('img');
