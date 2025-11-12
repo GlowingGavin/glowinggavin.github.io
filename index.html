@@ -54,77 +54,8 @@
 <h2 id="turn">Loading...</h2>
 <div id="board"></div>
 
-<!-- ✅ Full browser chess.js embedded so it can’t break -->
-<script>
-/*! chess.js v1.0.0 browser-safe version */
-(function (root, factory) {
-  if (typeof define === "function" && define.amd) {
-    define([], factory);
-  } else if (typeof exports === "object") {
-    module.exports = factory();
-  } else {
-    root.Chess = factory();
-  }
-})(this, function () {
-  var r =
-    "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
-    t = "pnbrqkPNBRQK";
-  function n(r) {
-    var n = r.split(" ");
-    if (n.length < 2) throw "Invalid FEN";
-    var e = n[0].split("/"),
-      i = [],
-      o = 0;
-    for (var f = 0; f < 8; f++) {
-      var a = [];
-      for (var s = 0; s < e[f].length; s++) {
-        var c = e[f][s];
-        if (isNaN(c)) a.push(c);
-        else for (var u = 0; u < parseInt(c); u++) a.push(" ");
-      }
-      i.push(a);
-    }
-    return { board: i, turn: n[1] };
-  }
-  function e(e) {
-    var i = n(e || r),
-      o = i.board,
-      f = i.turn;
-    function a(e, i) {
-      var a = o[8 - parseInt(i[1])][e.charCodeAt(0) - 97];
-      return t.indexOf(a) === -1
-        ? null
-        : { type: a.toLowerCase(), color: a === a.toLowerCase() ? "b" : "w" };
-    }
-    function s() {
-      return f;
-    }
-    function c(e) {
-      var t = o[8 - parseInt(e.from[1])],
-        n = 8 - parseInt(e.to[1]);
-      var i = e.from.charCodeAt(0) - 97,
-        a = e.to.charCodeAt(0) - 97;
-      var s = t[i];
-      if (s === " ") return null;
-      if ((s === s.toLowerCase() ? "b" : "w") !== f) return null;
-      o[n][a] = s;
-      t[i] = " ";
-      f = f === "w" ? "b" : "w";
-      return e;
-    }
-    return {
-      move: c,
-      get: a,
-      turn: s,
-      fen: function () {
-        return e;
-      },
-      undo: function () {},
-    };
-  }
-  return e;
-});
-</script>
+<!-- ✅ Correct, browser-safe chess.js (no exports or Node issues) -->
+<script src="https://cdn.jsdelivr.net/npm/@jhlywa/chess.js@1.0.0/dist/chess.min.js"></script>
 
 <script>
 const PIECE_PATH = "pieces/";
