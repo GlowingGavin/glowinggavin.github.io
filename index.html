@@ -56,135 +56,136 @@
   <div id="turn">White to move</div>
   <div id="promoMenu"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/chess.js@1.0.0/dist/chess.min.js"></script>
-<script>
-const files=['a','b','c','d','e','f','g','h'];
-const ranks=[8,7,6,5,4,3,2,1];
-const board=document.getElementById('board');
-const turnDisplay=document.getElementById('turn');
-const promoMenu=document.getElementById('promoMenu');
+  <!-- ✅ Load chess.js BEFORE your own script -->
+  <script src="https://cdn.jsdelivr.net/npm/chess.js@1.0.0/dist/chess.min.js"></script>
 
-const game=new Chess(); // chess.js handles rules
+  <script>
+  const files=['a','b','c','d','e','f','g','h'];
+  const ranks=[8,7,6,5,4,3,2,1];
+  const board=document.getElementById('board');
+  const turnDisplay=document.getElementById('turn');
+  const promoMenu=document.getElementById('promoMenu');
 
-function drawBoard(){
-  board.innerHTML='';
-  const position=game.board();
-  for(let r=0;r<8;r++){
-    for(let f=0;f<8;f++){
-      const id=files[f]+(8-r);
-      const sq=document.createElement('div');
-      sq.id=id;
-      sq.className='square '+(((f+r)%2===0)?'light':'dark');
-      const p=position[r][f];
-      if(p){
-        const img=document.createElement('img');
-        img.className='piece';
-        img.src=`pieces/${p.color}${p.type}.png`;
-        img.draggable=true;
-        sq.appendChild(img);
+  const game=new Chess(); // ✅ now works because library is loaded first
+
+  function drawBoard(){
+    board.innerHTML='';
+    const position=game.board();
+    for(let r=0;r<8;r++){
+      for(let f=0;f<8;f++){
+        const id=files[f]+(8-r);
+        const sq=document.createElement('div');
+        sq.id=id;
+        sq.className='square '+(((f+r)%2===0)?'light':'dark');
+        const p=position[r][f];
+        if(p){
+          const img=document.createElement('img');
+          img.className='piece';
+          img.src=`pieces/${p.color}${p.type}.png`;
+          img.draggable=true;
+          sq.appendChild(img);
+        }
+        board.appendChild(sq);
       }
-      board.appendChild(sq);
+    }
+    turnDisplay.textContent = 
+      game.in_checkmate() ? "Checkmate!" :
+      game.in_stalemate() ? "Stalemate!" :
+      (game.in_check() ?
+        (game.turn()==='w' ? "White in Check!" : "Black in Check!") :
+        (game.turn()==='w' ? "White to move" : "Black to move"));
+    enableDnD();
+  }
+
+  function enableDnD(){
+    let dragged=null,source=null;
+    document.querySelectorAll('.piece').forEach(pc=>{
+      pc.addEventListener('dragstart',e=>{
+        const sq=e.target.parentElement.id;
+        if(game.turn()!==getPieceColor(sq)){e.preventDefault();return;}
+        dragged=e.target;source=sq;
+        setTimeout(()=>dragged.style.visibility='hidden',0);
+        highlightMoves(sq);
+      });
+      pc.addEventListener('dragend',()=>{
+        if(dragged) dragged.style.visibility='visible';
+        dragged=null;
+        clearHighlights();
+      });
+    });
+    document.querySelectorAll('.square').forEach(sq=>{
+      sq.addEventListener('dragover',e=>e.preventDefault());
+      sq.addEventListener('drop',e=>{
+        e.preventDefault();
+        const target=e.target.closest('.square').id;
+        if(!dragged||!source)return;
+
+        const piece=game.get(source);
+        const isPawn=piece && piece.type==='p';
+        const promotionRank=(piece.color==='w')? '8':'1';
+        if(isPawn && target[1]===promotionRank){
+          showPromotionMenu(piece.color,(choice)=>{
+            makeMove(source,target,choice);
+          });
+        } else {
+          makeMove(source,target,'q');
+        }
+        source=null;
+      });
+    });
+  }
+
+  function makeMove(from,to,promotion){
+    const move=game.move({from,to,promotion});
+    if(move){
+      drawBoard();
+      if(game.game_over()){
+        setTimeout(()=>{
+          alert(
+            game.in_checkmate() ? "Checkmate!" :
+            game.in_stalemate() ? "Stalemate!" :
+            game.in_draw() ? "Draw!" :
+            "Game Over"
+          );
+        },100);
+      }
     }
   }
-  turnDisplay.textContent = 
-    game.in_checkmate() ? "Checkmate!" :
-    game.in_stalemate() ? "Stalemate!" :
-    (game.in_check() ? 
-      (game.turn()==='w' ? "White in Check!" : "Black in Check!") :
-      (game.turn()==='w' ? "White to move" : "Black to move"));
-  enableDnD();
-}
 
-function enableDnD(){
-  let dragged=null,source=null;
-  document.querySelectorAll('.piece').forEach(pc=>{
-    pc.addEventListener('dragstart',e=>{
-      const sq=e.target.parentElement.id;
-      if(game.turn()!==getPieceColor(sq)){e.preventDefault();return;}
-      dragged=e.target;source=sq;
-      setTimeout(()=>dragged.style.visibility='hidden',0);
-      highlightMoves(sq);
-    });
-    pc.addEventListener('dragend',()=>{
-      if(dragged) dragged.style.visibility='visible';
-      dragged=null;
-      clearHighlights();
-    });
-  });
-  document.querySelectorAll('.square').forEach(sq=>{
-    sq.addEventListener('dragover',e=>e.preventDefault());
-    sq.addEventListener('drop',e=>{
-      e.preventDefault();
-      const target=e.target.closest('.square').id;
-      if(!dragged||!source)return;
-
-      // check if promotion move
-      const piece=game.get(source);
-      const isPawn=piece && piece.type==='p';
-      const promotionRank=(piece.color==='w')? '8':'1';
-      if(isPawn && target[1]===promotionRank){
-        showPromotionMenu(piece.color,(choice)=>{
-          makeMove(source,target,choice);
-        });
-      } else {
-        makeMove(source,target,'q'); // default queen for non-pawn moves
-      }
-      source=null;
-    });
-  });
-}
-
-function makeMove(from,to,promotion){
-  const move=game.move({from,to,promotion});
-  if(move){
-    drawBoard();
-    if(game.game_over()){
-      setTimeout(()=>{
-        alert(
-          game.in_checkmate() ? "Checkmate!" :
-          game.in_stalemate() ? "Stalemate!" :
-          game.in_draw() ? "Draw!" :
-          "Game Over"
-        );
-      },100);
-    }
+  function getPieceColor(square){
+    const piece=game.get(square);
+    return piece?piece.color:null;
   }
-}
 
-function getPieceColor(square){
-  const piece=game.get(square);
-  return piece?piece.color:null;
-}
+  function highlightMoves(square){
+    clearHighlights();
+    const moves=game.moves({square,verbose:true});
+    moves.forEach(m=>{
+      const el=document.getElementById(m.to);
+      if(el) el.classList.add('highlight');
+    });
+  }
 
-function highlightMoves(square){
-  clearHighlights();
-  const moves=game.moves({square,verbose:true});
-  moves.forEach(m=>{
-    const el=document.getElementById(m.to);
-    if(el) el.classList.add('highlight');
-  });
-}
+  function clearHighlights(){
+    document.querySelectorAll('.square').forEach(sq=>sq.classList.remove('highlight'));
+  }
 
-function clearHighlights(){
-  document.querySelectorAll('.square').forEach(sq=>sq.classList.remove('highlight'));
-}
+  function showPromotionMenu(color,callback){
+    promoMenu.innerHTML='';
+    const pieces=['q','r','b','n'];
+    pieces.forEach(t=>{
+      const img=document.createElement('img');
+      img.src=`pieces/${color}${t}.png`;
+      img.onclick=()=>{
+        promoMenu.style.display='none';
+        callback(t);
+      };
+      promoMenu.appendChild(img);
+    });
+    promoMenu.style.display='flex';
+  }
 
-function showPromotionMenu(color,callback){
-  promoMenu.innerHTML='';
-  const pieces=['q','r','b','n'];
-  pieces.forEach(t=>{
-    const img=document.createElement('img');
-    img.src=`pieces/${color}${t}.png`;
-    img.onclick=()=>{
-      promoMenu.style.display='none';
-      callback(t);
-    };
-    promoMenu.appendChild(img);
-  });
-  promoMenu.style.display='flex';
-}
-
-drawBoard();
-</script>
+  drawBoard();
+  </script>
 </body>
 </html>
