@@ -71,8 +71,16 @@
 
   .name {
     font-weight: 600;
-    text-transform: capitalize;
     font-size: 17px;
+  }
+
+  .name a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .name a:hover {
+    text-decoration: underline;
   }
 
   .rating {
@@ -94,40 +102,40 @@
 
 <script>
   const engines = [
-    {name: "stockfish", img: "lrg_stockfish@2x.png", rating: 3916},
-    {name: "torch", img: "lrg_torch@2x.png", rating: 3928},
-    {name: "reckless", img: "lrg_reckless@2x.png", rating: 3771},
-    {name: "obsidian", img: "lrg_obsidian@2x.png", rating: 3870},
-    {name: "lc0", img: "lrg_lc0@2x.png", rating: 3870},
-    {name: "integral", img: "lrg_integral@2x.png", rating: 3875},
-    {name: "PlentyChess", img: "lrg_plentychess@2x.png", rating: 3843},
-    {name: "berserk", img: "lrg_berserk@2x.png", rating: 3843},
-    {name: "caissa", img: "lrg_caissa@2x.png", rating: 3837},
-    {name: "dragon", img: "lrg_dragon@2x.png", rating: 3832},
-    {name: "viridithas", img: "lrg_viridithas@2x.png", rating: 3801},
-    {name: "rubi", img: "lrg_rubi@2x.png", rating: 3806},
-    {name: "halogen", img: "lrg_halogen@2x.png", rating: 3671},
-    {name: "stormphrax", img: "lrg_stormphrax@2x.png", rating: 3806},
-    {name: "uralochka", img: "lrg_uralochka@2x.png", rating: 3771},
-    {name: "clover", img: "lrg_clover@2x.png", rating: 3751},
-    {name: "ethereal", img: "lrg_ethereal@2x.png", rating: 3816},
-    {name: "rofchade", img: "lrg_rofchade@2x.png", rating: 3776},
-    {name: "velvet", img: "lrg_velvet@2x.png", rating: 3771},
-    {name: "seer", img: "lrg_seer@2x.png", rating: 3766},
-    {name: "igel", img: "lrg_igel@2x.png", rating: 3741},
-    {name: "renegade", img: "lrg_renegade@2x.png", rating: 3701},
-    {name: "akimbo", img: "lrg_akimbo@2x.png", rating: 3701},
-    {name: "blackmarlin", img: "lrg_blackmarlin@2x.png", rating: 3640},
-    {name: "clarity", img: "lrg_clarity@2x.png", rating: 3661},
-    {name: "minic", img: "lrg_minic@2x.png", rating: 3645},
-    {name: "winter", img: "lrg_winter@2x.png", rating: 3607},
-    {name: "equisetum", img: "lrg_equisetum@2x.png", rating: 3706},
-    {name: "tucano", img: "lrg_tucano@2x.png", rating: 3640},
-    {name: "weiss", img: "lrg_weiss@2x.png", rating: 3624},
-    {name: "patricia", img: "lrg_patricia@2x.png", rating: 3634},
-    {name: "revenge", img: "lrg_revenge@2x.png", rating: 3696},
-    {name: "stash", img: "lrg_stash@2x.png", rating: 3560},
-    {name: "wasp", img: "lrg_wasp@2x.png", rating: 3607}
+    {name: "Stockfish", link: "https://github.com/official-stockfish/Stockfish", img: "lrg_stockfish@2x.png", rating: 3916},
+    {name: "Torch", link: "https://komodochess.com/", img: "lrg_torch@2x.png", rating: 3928},
+    {name: "Reckless", link: "https://github.com/codedeliveryservice/Reckless", img: "lrg_reckless@2x.png", rating: 3771},
+    {name: "Obsidian", link: "https://github.com/gab8192/Obsidian", img: "lrg_obsidian@2x.png", rating: 3870},
+    {name: "Lc0", link: "https://github.com/LeelaChessZero/lc0", img: "lrg_lc0@2x.png", rating: 3870},
+    {name: "Integral", link: "https://github.com/aronpetko/integral", img: "lrg_integral@2x.png", rating: 3875},
+    {name: "PlentyChess", link: "https://github.com/Yoshie2000/PlentyChess", img: "lrg_plentychess@2x.png", rating: 3843},
+    {name: "Berserk", link: "https://github.com/jhonnold/berserk", img: "lrg_berserk@2x.png", rating: 3843},
+    {name: "Caissa", link: "https://github.com/Witek902/Caissa", img: "lrg_caissa@2x.png", rating: 3837},
+    {name: "Dragon", link: "https://komodochess.com/", img: "lrg_dragon@2x.png", rating: 3832},
+    {name: "Viridithas", link: "https://github.com/cosmobobak/viridithas", img: "lrg_viridithas@2x.png", rating: 3801},
+    {name: "Rubi", link: "https://github.com/Matthies/RubiChess", img: "lrg_rubi@2x.png", rating: 3806},
+    {name: "Halogen", link: "https://github.com/KierenP/Halogen", img: "lrg_halogen@2x.png", rating: 3671},
+    {name: "Stormphrax", link: "https://github.com/Ciekce/Stormphrax", img: "lrg_stormphrax@2x.png", rating: 3806},
+    {name: "Uralochka", link: "https://gitlab.com/freemanzlat/uralochka3", img: "lrg_uralochka@2x.png", rating: 3771},
+    {name: "Clover", link: "https://github.com/lucametehau/CloverEngine", img: "lrg_clover@2x.png", rating: 3751},
+    {name: "Ethereal", link: "https://github.com/AndyGrant/Ethereal", img: "lrg_ethereal@2x.png", rating: 3816},
+    {name: "Rofchade", link: "https://rofchade.nl/", img: "lrg_rofchade@2x.png", rating: 3776},
+    {name: "Velvet", link: "https://github.com/mhonert/velvet-chess", img: "lrg_velvet@2x.png", rating: 3771},
+    {name: "Seer", link: "https://github.com/connormcmonigle/seer-nnue", img: "lrg_seer@2x.png", rating: 3766},
+    {name: "Igel", link: "https://github.com/vshcherbyna/igel", img: "lrg_igel@2x.png", rating: 3741},
+    {name: "Renegade", link: "https://github.com/pkrisz99/Renegade", img: "lrg_renegade@2x.png", rating: 3701},
+    {name: "Akimbo", link: "https://github.com/jw1912/akimbo", img: "lrg_akimbo@2x.png", rating: 3701},
+    {name: "BlackMarlin", link: "https://github.com/jnlt3/blackmarlin", img: "lrg_blackmarlin@2x.png", rating: 3640},
+    {name: "Clarity", link: "https://github.com/Vast342/Clarity", img: "lrg_clarity@2x.png", rating: 3661},
+    {name: "Minic", link: "https://github.com/tryingsomestuff/Minic", img: "lrg_minic@2x.png", rating: 3645},
+    {name: "Winter", link: "https://github.com/rosenthj/Winter", img: "lrg_winter@2x.png", rating: 3607},
+    {name: "Equisetum", link: "https://github.com/justNo4b/Equisetum", img: "lrg_equisetum@2x.png", rating: 3706},
+    {name: "Tucano", link: "https://github.com/alcides-schulz/Tucano", img: "lrg_tucano@2x.png", rating: 3640},
+    {name: "Weiss", link: "https://github.com/TerjeKir/weiss", img: "lrg_weiss@2x.png", rating: 3624},
+    {name: "Patricia", link: "https://github.com/Adam-Kulju/Patricia", img: "lrg_patricia@2x.png", rating: 3634},
+    {name: "Revenge", link: "https://www.revengechess.com/index.html", img: "lrg_revenge@2x.png", rating: 3696},
+    {name: "Stash", link: "https://github.com/mhouppin/stash-bot", img: "lrg_stash@2x.png", rating: 3560},
+    {name: "Wasp", link: "https://waspchess.com/", img: "lrg_wasp@2x.png", rating: 3607}
   ];
 
   engines.sort((a, b) => b.rating - a.rating);
@@ -137,7 +145,6 @@
   engines.forEach((engine, i) => {
     const div = document.createElement("div");
     div.className = "entry";
-
     if (i === 0) div.classList.add("first");
     else if (i === 1) div.classList.add("second");
     else if (i === 2) div.classList.add("third");
@@ -149,7 +156,7 @@
         <span class="badge">${badge}</span>
         <span class="rank">#${i+1}</span>
         <img src="engine_logos/${engine.img}" alt="${engine.name}">
-        <span class="name">${engine.name}</span>
+        <span class="name"><a href="${engine.link}" target="_blank">${engine.name}</a></span>
       </div>
       <span class="rating">${engine.rating}</span>
     `;
