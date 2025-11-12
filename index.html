@@ -11,54 +11,62 @@
     color: #fff;
     display: flex;
     justify-content: center;
-    padding: 40px;
+    padding: 50px;
   }
   .leaderboard {
-    width: 520px;
+    width: 650px;
     background: #1a1a1d;
-    border-radius: 15px;
-    box-shadow: 0 0 15px rgba(0,0,0,0.5);
-    padding: 20px;
+    border-radius: 20px;
+    box-shadow: 0 0 25px rgba(0,0,0,0.6);
+    padding: 30px;
   }
   .leaderboard h2 {
     text-align: center;
-    margin-bottom: 20px;
-    color: #00c3ff;
+    margin-bottom: 25px;
+    color: #ffffff;
+    font-size: 28px;
+    letter-spacing: 1px;
   }
   .entry {
     display: flex;
     align-items: center;
     justify-content: space-between;
     background: #2a2a30;
-    padding: 10px 15px;
-    border-radius: 10px;
-    margin-bottom: 10px;
+    padding: 14px 20px;
+    border-radius: 12px;
+    margin-bottom: 12px;
     transition: background 0.3s;
   }
   .entry:hover { background: #33333a; }
   .entry-left {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 14px;
   }
   .entry img {
-    width: 40px;
-    height: 40px;
-    border-radius: 8px;
+    width: 50px;
+    height: 50px;
+    border-radius: 10px;
     object-fit: cover;
   }
   .rank {
     font-weight: 700;
-    color: #00c3ff;
-    width: 35px;
+    color: #ffffff;
+    width: 40px;
     text-align: center;
+  }
+  .badge {
+    font-size: 22px;
+    margin-right: 6px;
   }
   .name {
     font-weight: 600;
     text-transform: capitalize;
+    font-size: 17px;
   }
   .rating {
     font-weight: 700;
+    font-size: 17px;
   }
 </style>
 </head>
@@ -76,7 +84,7 @@
     {name: "obsidian", img: "lrg_obsidian@2x.png", rating: 3870},
     {name: "lc0", img: "lrg_lc0@2x.png", rating: 3870},
     {name: "integral", img: "lrg_integral@2x.png", rating: 3875},
-    {name: "plentychess", img: "lrg_plentychess@2x.png", rating: 3843},
+    {name: "PlentyChess", img: "lrg_plentychess@2x.png", rating: 3843},
     {name: "berserk", img: "lrg_berserk@2x.png", rating: 3843},
     {name: "caissa", img: "lrg_caissa@2x.png", rating: 3837},
     {name: "dragon", img: "lrg_dragon@2x.png", rating: 3832},
@@ -106,15 +114,22 @@
     {name: "wasp", img: "lrg_wasp@2x.png", rating: 3607}
   ];
 
-  // --- Sort & Render ---
   engines.sort((a, b) => b.rating - a.rating);
   const list = document.getElementById("engine-list");
   list.innerHTML = "";
+
   engines.forEach((engine, i) => {
     const div = document.createElement("div");
     div.className = "entry";
+
+    let badge = "";
+    if (i === 0) badge = "🥇";
+    else if (i === 1) badge = "🥈";
+    else if (i === 2) badge = "🥉";
+
     div.innerHTML = `
       <div class="entry-left">
+        <span class="badge">${badge}</span>
         <span class="rank">#${i+1}</span>
         <img src="engine_logos/${engine.img}" alt="${engine.name}">
         <span class="name">${engine.name}</span>
