@@ -93,7 +93,6 @@ const canvas = document.getElementById("map");
 const ctx = canvas.getContext("2d");
 
 let scale = 1;
-
 let villages = [];
 let selected = null;
 let t = 0;
@@ -105,7 +104,9 @@ function resize() {
 
   const w = window.innerWidth;
   const h = window.innerHeight - hdr.offsetHeight;
-  scale = Math.min(w, h) / BASE;
+
+  // BIG scaling (fills screen)
+  scale = Math.max(w, h) / BASE * 1.05;
 
   canvas.style.width  = BASE * scale + "px";
   canvas.style.height = BASE * scale + "px";
@@ -214,12 +215,7 @@ function draw() {
     ctx.font = "12px monospace";
     ctx.fillStyle = v.color;
     ctx.shadowBlur = 0;
-
-    const num = String(v.k);
-    const m = ctx.measureText(num);
-    let nx = Math.max(0, Math.min(BASE - m.width, v.x + 6));
-    let ny = Math.max(12, Math.min(BASE, v.y - 6));
-    ctx.fillText(num, nx, ny);
+    ctx.fillText(String(v.k), v.x + 6, v.y - 6);
   }
 
   if (selected) {
