@@ -105,8 +105,8 @@ function resize() {
   const w = window.innerWidth;
   const h = window.innerHeight - hdr.offsetHeight;
 
-  // BIG scaling (fills screen)
-  scale = Math.max(w, h) / BASE * 1.05;
+  // ✅ Balanced scaling (big but never overflowing)
+  scale = Math.min(w, h) / BASE * 0.98;
 
   canvas.style.width  = BASE * scale + "px";
   canvas.style.height = BASE * scale + "px";
