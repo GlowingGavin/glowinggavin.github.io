@@ -7,19 +7,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
-  /* ====== CHANGED: fixed viewport layout ====== */
   html, body {
     margin: 0;
     height: 100%;
   }
 
   body {
-    display: flex;              /* NEW */
-    flex-direction: column;     /* NEW */
+    display: flex;
+    flex-direction: column;
     background: radial-gradient(circle at center, #0b0c11, #05060a 70%);
     color: #eaeaf0;
     font-family: system-ui, -apple-system, Segoe UI, sans-serif;
-    overflow: hidden;           /* NEW: no scroll */
+    overflow: hidden;
   }
 
   header {
@@ -49,7 +48,6 @@
     outline: none;
   }
 
-  /* ====== NEW wrapper ====== */
   #canvasWrap {
     flex: 1;
     display: flex;
@@ -69,7 +67,6 @@
   <input id="seed" spellcheck="false" value="123456789">
 </header>
 
-<!-- ====== CHANGED: wrapped canvas ====== -->
 <div id="canvasWrap">
   <canvas id="map"></canvas>
 </div>
@@ -102,7 +99,7 @@ let villages = [];
 let selected = null;
 let t = 0;
 
-// ================= NEW: canvas resize =================
+// ================= CANVAS RESIZE (FULL FIX) =================
 function resizeCanvas() {
   const header = document.querySelector("header");
   const avail = window.innerHeight - header.offsetHeight;
@@ -112,6 +109,10 @@ function resizeCanvas() {
   canvas.height = size;
   canvas.style.width = size + "px";
   canvas.style.height = size + "px";
+
+  // IMPORTANT: villages are stored in canvas-space
+  selected = null;
+  generate(document.getElementById("seed").value);
 }
 
 window.addEventListener("resize", resizeCanvas);
@@ -241,6 +242,23 @@ function draw() {
   requestAnimationFrame(draw);
 }
 
+// ================= INTERACTION =================
+canvas.addEventListener("click", e => {
+  const r = canvas.getBoundingClientRect();
+  const mx = e.clientX - r.left;
+  const my = e.clientY - r.top;
+
+  selected = null;
+  for (const v of villages) {
+    const dx = mx - v.x;
+    const dy = my - v.y;
+    if (dx*dx + dy*dy < 100) {
+      selected = v;
+      break;
+    }
+  }
+});
+
 // ================= INIT =================
 let timeout;
 document.getElementById("seed").addEventListener("input", e => {
@@ -248,8 +266,7 @@ document.getElementById("seed").addEventListener("input", e => {
   timeout = setTimeout(() => generate(e.target.value), 120);
 });
 
-resizeCanvas();                              // NEW
-generate(document.getElementById("seed").value);
+resizeCanvas();
 draw();
 </script>
 </body>
