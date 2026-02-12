@@ -131,12 +131,8 @@ function worldToCanvas(x, z) {
 }
 
 function rarityText(k) {
-  const base = (4 ** (k + 1)) / 3;
-  if (base < 1e6) return `1 in ${base.toFixed(0)}`;
-  if (base < 1e9) return `1 in ${(base/1e6).toFixed(1)} million`;
-  if (base < 1e12) return `1 in ${(base/1e9).toFixed(1)} billion`;
-  if (base < 1e15) return `1 in ${(base/1e12).toFixed(1)} trillion`;
-  return `1 in ${(base/1e15).toFixed(2)} quadrillion`;
+  const base = (4n ** BigInt(k + 1)) / 3n;
+  return "1 in " + base.toString();
 }
 
 function glowFor(k) {
