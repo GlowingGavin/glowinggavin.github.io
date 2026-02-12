@@ -140,17 +140,36 @@ function rarityText(k) {
 }
 
 function glowFor(k) {
-  if (k <= 1) return "#7cff7c";
-  if (k === 2) return "#ffd000";
-  if (k === 3) return "#ff8c1a";
-  if (k === 4) return "#ff2d2d";
-  if (k === 5) return "#ff4bff";
-  if (k <= 7) return "#8a2be2";
-  if (k <= 10) return "#00e5ff";
-  if (k <= 14) return "#adff2f";
-  if (k <= 18) return "#ffd700";
-  if (k <= 22) return "#ff6a00";
-  if (k <= 26) return "#ff003c";
+  if (k <= 1) return "#7cff7c";      // light green
+  if (k === 2) return "#ffd000";     // yellow
+  if (k === 3) return "#ff8c1a";     // orange
+  if (k === 4) return "#ff2d2d";     // red
+  if (k === 5) return "#ff4bff";     // pink
+  if (k === 6) return "#c04bff";     // violet
+  if (k === 7) return "#8a2be2";     // blue-violet
+  if (k === 8) return "#5f3cff";     // deep indigo
+  if (k === 9) return "#3a6bff";     // bright blue
+  if (k === 10) return "#00e5ff";    // cyan
+  if (k === 11) return "#00ffd5";    // aqua
+  if (k === 12) return "#00ff99";    // neon green
+  if (k === 13) return "#66ff00";    // lime
+  if (k === 14) return "#adff2f";    // green-yellow
+  if (k === 15) return "#e6ff00";    // bright yellow
+  if (k === 16) return "#ffd700";    // gold
+  if (k === 17) return "#ffb300";    // amber
+  if (k === 18) return "#ff6a00";    // deep orange
+  if (k === 19) return "#ff3300";    // red-orange
+  if (k === 20) return "#ff003c";    // crimson
+  if (k === 21) return "#ff006f";    // hot pink
+  if (k === 22) return "#ff00aa";    // magenta
+  if (k === 23) return "#e000ff";    // neon purple
+  if (k === 24) return "#a000ff";    // deep purple
+  if (k === 25) return "#6a00ff";    // electric violet
+  if (k === 26) return "#4b00ff";    // royal indigo
+  if (k === 27) return "#003cff";    // strong blue
+  if (k === 28) return "#00aaff";    // sky blue
+  if (k === 29) return "#00ffff";    // bright cyan
+  if (k <= 35) return "#ffffff";     // white (very rare)
   return "#ffffff";
 }
 
