@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>64-bit Seed Truncator</title>
+<style>
+  body {
+    font-family: sans-serif;
+    background: #000000;
+    color: #e0e0e0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px;
+  }
+
+  input {
+    width: 350px;
+    padding: 10px;
+    font-size: 16px;
+    border-radius: 6px;
+    border: 1px solid #444;
+    background: #000000;
+    color: #fff;
+    margin-bottom: 12px;
+  }
+
+  button {
+    padding: 10px 20px;
+    font-size: 16px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    background: #00ff00; /* bright green */
+    color: #000000;
+    margin-bottom: 20px;
+  }
+
+  #result {
+    font-family: monospace;
+    font-size: 16px;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<h2>64-bit Seed Truncator</h2>
+<input type="text" id="seedInput" placeholder="Enter your big seed here" value="16636921312475">
+<button id="truncateBtn">Truncate to 64-bit</button>
+
+<div id="result"></div>
+
+<script>
+const input = document.getElementById('seedInput');
+const button = document.getElementById('truncateBtn');
+const result = document.getElementById('result');
+
+button.addEventListener('click', () => {
+  try {
+    const big = BigInt(input.value.trim());
+    const mod64 = BigInt.asUintN(64, big);
+
+    result.textContent = `Decimal: ${mod64.toString()}`;
+  } catch (e) {
+    result.textContent = "Invalid number!";
+  }
+});
+</script>
+
+</body>
+</html>
