@@ -50,21 +50,21 @@
 <input type="text" id="seedInput" placeholder="Enter your big seed here">
 <button id="truncateBtn">Truncate to 64-bit</button>
 
-<div id="result"></div>
+<input type="text" id="resultBox" readonly placeholder="64-bit result will appear here">
 
 <script>
 const input = document.getElementById('seedInput');
 const button = document.getElementById('truncateBtn');
-const result = document.getElementById('result');
+const resultBox = document.getElementById('resultBox');
 
 button.addEventListener('click', () => {
   try {
     const big = BigInt(input.value.trim());
     const mod64 = BigInt.asUintN(64, big);
 
-    result.textContent = `Decimal: ${mod64.toString()}`;
+    resultBox.value = mod64.toString();
   } catch (e) {
-    result.textContent = "Invalid number!";
+    resultBox.value = "Invalid number!";
   }
 });
 </script>
