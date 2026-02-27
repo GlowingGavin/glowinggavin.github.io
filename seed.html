@@ -277,7 +277,7 @@ canvas.addEventListener("click", e => {
 let timeout;
 document.getElementById("seed").addEventListener("input", e => {
   clearTimeout(timeout);
-  timeout = setTimeout(() => generate(e.target.value), 120);
+  generate(e.target.value);
 });
 
 resizeCanvas();
