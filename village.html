@@ -147,7 +147,6 @@ function generate(){
     const rng=new SplitMix64(parseSeed(seedInput.value));
     grid.innerHTML="";
 
-    // 🔥 Move center RNG BEFORE grid loop
     const centerPick = rng.nextInt(CENTERS.length);
 
     for(let r=0;r<5;r++){

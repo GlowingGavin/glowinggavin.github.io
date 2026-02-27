@@ -95,11 +95,11 @@ const q = 0.25;
 const canvas = document.getElementById("map");
 const ctx = canvas.getContext("2d");
 
-let villages = [];
+let dots = [];
 let selected = null;
 let t = 0;
 
-// ================= CANVAS RESIZE (FULL FIX) =================
+// ================= CANVAS RESIZE =================
 function resizeCanvas() {
   const header = document.querySelector("header");
   const avail = window.innerHeight - header.offsetHeight;
@@ -110,7 +110,6 @@ function resizeCanvas() {
   canvas.style.width = size + "px";
   canvas.style.height = size + "px";
 
-  // IMPORTANT: villages are stored in canvas-space
   selected = null;
   generate(document.getElementById("seed").value);
 }
@@ -165,7 +164,7 @@ function glowFor(k) {
   if (k === 27) return "#003cff";    // strong blue
   if (k === 28) return "#00aaff";    // sky blue
   if (k === 29) return "#00ffff";    // bright cyan
-  if (k >= 30) return "#ffffff";     // white (very rare)
+  if (k >= 30) return "#ffffff";     // white
   return "#ffffff";
 }
 
@@ -180,7 +179,7 @@ function clampText(x, y, text, font) {
 
 // ================= GENERATION =================
 function generate(seedStr) {
-  villages = [];
+  dots = [];
   selected = null;
   const rng = new SplitMix64(seedToU64(seedStr));
 
@@ -195,7 +194,7 @@ function generate(seedStr) {
       while (rng.float() < q) k++;
 
       const p = worldToCanvas(x, z);
-      villages.push({ x: p.x, y: p.y, k, color: glowFor(k) });
+      dots.push({ x: p.x, y: p.y, k, color: glowFor(k) });
     }
   }
 }
@@ -205,7 +204,7 @@ function draw() {
   t += 0.016;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  for (const v of villages) {
+  for (const v of dots) {
     const pulse = selected === v ? 1 : 1 + Math.sin(t * 2 + v.k) * 0.15;
     const r = 3 + Math.min(v.k, 8) * pulse;
 
@@ -264,7 +263,7 @@ canvas.addEventListener("click", e => {
   const my = e.clientY - r.top;
 
   selected = null;
-  for (const v of villages) {
+  for (const v of dots) {
     const dx = mx - v.x;
     const dy = my - v.y;
     if (dx*dx + dy*dy < 100) {
