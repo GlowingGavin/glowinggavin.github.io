@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Minecraft Seed Info</title>
+
+<style>
+
+body{
+    background:#000;
+    color:white;
+    font-family:monospace;
+    text-align:center;
+}
+
+#seedInput{
+    margin-top:40px;
+    width:500px;
+    padding:15px;
+    font-size:20px;
+    background:#111;
+    border:2px solid #444;
+    color:white;
+}
+
+.grid{
+    width:600px;
+    margin:40px auto;
+    display:grid;
+    grid-template-columns:repeat(2,280px);
+    grid-template-rows:repeat(2,120px);
+    gap:20px;
+    justify-content:center;
+}
+
+.box{
+    background:#111;
+    border:2px solid #444;
+    width:280px;
+    height:120px;
+    padding:20px;
+    font-size:22px;
+
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+
+    box-sizing:border-box;
+}
+
+.label{
+    font-size:16px;
+    color:#aaa;
+    margin-bottom:10px;
+}
+
+</style>
+</head>
+
+<body>
+
+<input id="seedInput" placeholder="Enter seed">
+
+<div class="grid">
+
+<div class="box">
+<div class="label">World Seed</div>
+<div id="worldSeed">-</div>
+</div>
+
+<div class="box">
+<div class="label">Structure Seed</div>
+<div id="structureSeed">-</div>
+</div>
+
+<div class="box">
+<div class="label">Random Seed</div>
+<div id="randomSeed">❌</div>
+</div>
+
+<div class="box">
+<div class="label">Text Seed</div>
+<div id="textSeed">❌</div>
+</div>
+
+</div>
+
+<script>
+
+const MULT = 25214903917n;
+const ADD  = 11n;
+const MASK = (1n << 48n) - 1n;
+
+function isNextLong(value){
+
+    let v = BigInt(value);
+
+    let high = (v >> 32n) & 0xffffffffn;
+    let low  = v & 0xffffffffn;
+
+    for(let lower16=0n; lower16<65536n; lower16++){
+
+        let seed = (high << 16n) | lower16;
+
+        seed = (seed * MULT + ADD) & MASK;
+
+        if((seed >> 16n) === low)
+            return true;
+    }
+
+    return false;
+}
+
+function isTextSeed(value){
+
+    const MIN = -(1n<<31n);
+    const MAX =  (1n<<31n) - 1n;
+
+    return value >= MIN && value <= MAX;
+}
+
+document.getElementById("seedInput").addEventListener("input", e => {
+
+    let val = e.target.value.trim();
+
+    if(val === ""){
+        worldSeed.textContent = "-";
+        structureSeed.textContent = "-";
+        randomSeed.textContent = "❌";
+        textSeed.textContent = "❌";
+        return;
+    }
+
+    try{
+
+        let num = BigInt(val);
+
+        const LONG_MIN = -9223372036854775808n;
+        const LONG_MAX =  9223372036854775807n;
+
+        let world;
+
+        // if outside 64 bit range -> use 32 bit hash
+        if(num < LONG_MIN || num > LONG_MAX){
+
+            let hash = 0;
+
+            for(let i=0;i<val.length;i++){
+                hash = ((hash * 31) + val.charCodeAt(i)) | 0;
+            }
+
+            world = BigInt(hash);
+
+        }else{
+            world = num;
+        }
+
+        worldSeed.textContent = world;
+
+		const MIN32 = -(1n<<31n);
+		const MAX32 = (1n<<31n)-1n;
+
+		if(world >= MIN32 && world <= MAX32){
+			// text seed case
+			structureSeed.textContent = world;
+		}else{
+			// normal 64-bit seed
+			structureSeed.textContent = world & ((1n<<48n)-1n);
+		}
+
+        randomSeed.textContent = isNextLong(world) ? "✅" : "❌";
+
+        textSeed.textContent =
+            (world >= -(1n<<31n) && world <= (1n<<31n)-1n) ? "✅" : "❌";
+
+    }catch{
+
+        randomSeed.textContent = "❌";
+        textSeed.textContent = "❌";
+
+    }
+
+});
+
+</script>
+
+</body>
+</html>
